@@ -1,0 +1,7 @@
+from django.apps import AppConfig
+
+
+class VitaConfig(AppConfig):
+    name = 'vita'
+    def ready(self):
+        import vita.signals

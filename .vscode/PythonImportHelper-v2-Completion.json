@@ -1,0 +1,1063 @@
+[
+    {
+        "label": "json",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "json",
+        "description": "json",
+        "detail": "json",
+        "documentation": {}
+    },
+    {
+        "label": "runpy",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "runpy",
+        "description": "runpy",
+        "detail": "runpy",
+        "documentation": {}
+    },
+    {
+        "label": "annotations",
+        "importPath": "__future__",
+        "description": "__future__",
+        "isExtraImport": true,
+        "detail": "__future__",
+        "documentation": {}
+    },
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "site",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "site",
+        "description": "site",
+        "detail": "site",
+        "documentation": {}
+    },
+    {
+        "label": "sys",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "sys",
+        "description": "sys",
+        "detail": "sys",
+        "documentation": {}
+    },
+    {
+        "label": "django.contrib.auth.models",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "django.contrib.auth.models",
+        "description": "django.contrib.auth.models",
+        "detail": "django.contrib.auth.models",
+        "documentation": {}
+    },
+    {
+        "label": "AbstractUser",
+        "importPath": "django.contrib.auth.models",
+        "description": "django.contrib.auth.models",
+        "isExtraImport": true,
+        "detail": "django.contrib.auth.models",
+        "documentation": {}
+    },
+    {
+        "label": "django.contrib.auth.validators",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "django.contrib.auth.validators",
+        "description": "django.contrib.auth.validators",
+        "detail": "django.contrib.auth.validators",
+        "documentation": {}
+    },
+    {
+        "label": "django.db.models.deletion",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "django.db.models.deletion",
+        "description": "django.db.models.deletion",
+        "detail": "django.db.models.deletion",
+        "documentation": {}
+    },
+    {
+        "label": "django.utils.timezone",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "django.utils.timezone",
+        "description": "django.utils.timezone",
+        "detail": "django.utils.timezone",
+        "documentation": {}
+    },
+    {
+        "label": "settings",
+        "importPath": "django.conf",
+        "description": "django.conf",
+        "isExtraImport": true,
+        "detail": "django.conf",
+        "documentation": {}
+    },
+    {
+        "label": "settings",
+        "importPath": "django.conf",
+        "description": "django.conf",
+        "isExtraImport": true,
+        "detail": "django.conf",
+        "documentation": {}
+    },
+    {
+        "label": "migrations",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "models",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "migrations",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "models",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "migrations",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "models",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "models",
+        "importPath": "django.db",
+        "description": "django.db",
+        "isExtraImport": true,
+        "detail": "django.db",
+        "documentation": {}
+    },
+    {
+        "label": "admin",
+        "importPath": "django.contrib",
+        "description": "django.contrib",
+        "isExtraImport": true,
+        "detail": "django.contrib",
+        "documentation": {}
+    },
+    {
+        "label": "admin",
+        "importPath": "django.contrib",
+        "description": "django.contrib",
+        "isExtraImport": true,
+        "detail": "django.contrib",
+        "documentation": {}
+    },
+    {
+        "label": "AppConfig",
+        "importPath": "django.apps",
+        "description": "django.apps",
+        "isExtraImport": true,
+        "detail": "django.apps",
+        "documentation": {}
+    },
+    {
+        "label": "timezone",
+        "importPath": "django.utils",
+        "description": "django.utils",
+        "isExtraImport": true,
+        "detail": "django.utils",
+        "documentation": {}
+    },
+    {
+        "label": "serializers",
+        "importPath": "rest_framework",
+        "description": "rest_framework",
+        "isExtraImport": true,
+        "detail": "rest_framework",
+        "documentation": {}
+    },
+    {
+        "label": "viewsets",
+        "importPath": "rest_framework",
+        "description": "rest_framework",
+        "isExtraImport": true,
+        "detail": "rest_framework",
+        "documentation": {}
+    },
+    {
+        "label": "status",
+        "importPath": "rest_framework",
+        "description": "rest_framework",
+        "isExtraImport": true,
+        "detail": "rest_framework",
+        "documentation": {}
+    },
+    {
+        "label": "re",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "re",
+        "description": "re",
+        "detail": "re",
+        "documentation": {}
+    },
+    {
+        "label": "post_save",
+        "importPath": "django.db.models.signals",
+        "description": "django.db.models.signals",
+        "isExtraImport": true,
+        "detail": "django.db.models.signals",
+        "documentation": {}
+    },
+    {
+        "label": "receiver",
+        "importPath": "django.dispatch",
+        "description": "django.dispatch",
+        "isExtraImport": true,
+        "detail": "django.dispatch",
+        "documentation": {}
+    },
+    {
+        "label": "TestCase",
+        "importPath": "django.test",
+        "description": "django.test",
+        "isExtraImport": true,
+        "detail": "django.test",
+        "documentation": {}
+    },
+    {
+        "label": "path",
+        "importPath": "django.urls",
+        "description": "django.urls",
+        "isExtraImport": true,
+        "detail": "django.urls",
+        "documentation": {}
+    },
+    {
+        "label": "include",
+        "importPath": "django.urls",
+        "description": "django.urls",
+        "isExtraImport": true,
+        "detail": "django.urls",
+        "documentation": {}
+    },
+    {
+        "label": "path",
+        "importPath": "django.urls",
+        "description": "django.urls",
+        "isExtraImport": true,
+        "detail": "django.urls",
+        "documentation": {}
+    },
+    {
+        "label": "include",
+        "importPath": "django.urls",
+        "description": "django.urls",
+        "isExtraImport": true,
+        "detail": "django.urls",
+        "documentation": {}
+    },
+    {
+        "label": "DefaultRouter",
+        "importPath": "rest_framework.routers",
+        "description": "rest_framework.routers",
+        "isExtraImport": true,
+        "detail": "rest_framework.routers",
+        "documentation": {}
+    },
+    {
+        "label": "Response",
+        "importPath": "rest_framework.response",
+        "description": "rest_framework.response",
+        "isExtraImport": true,
+        "detail": "rest_framework.response",
+        "documentation": {}
+    },
+    {
+        "label": "CreateModelMixin",
+        "importPath": "rest_framework.mixins",
+        "description": "rest_framework.mixins",
+        "isExtraImport": true,
+        "detail": "rest_framework.mixins",
+        "documentation": {}
+    },
+    {
+        "label": "RefreshToken",
+        "importPath": "rest_framework_simplejwt.tokens",
+        "description": "rest_framework_simplejwt.tokens",
+        "isExtraImport": true,
+        "detail": "rest_framework_simplejwt.tokens",
+        "documentation": {}
+    },
+    {
+        "label": "action",
+        "importPath": "rest_framework.decorators",
+        "description": "rest_framework.decorators",
+        "isExtraImport": true,
+        "detail": "rest_framework.decorators",
+        "documentation": {}
+    },
+    {
+        "label": "authenticate",
+        "importPath": "django.contrib.auth",
+        "description": "django.contrib.auth",
+        "isExtraImport": true,
+        "detail": "django.contrib.auth",
+        "documentation": {}
+    },
+    {
+        "label": "cloudinary.uploader",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "cloudinary.uploader",
+        "description": "cloudinary.uploader",
+        "detail": "cloudinary.uploader",
+        "documentation": {}
+    },
+    {
+        "label": "IsAuthenticated",
+        "importPath": "rest_framework.permissions",
+        "description": "rest_framework.permissions",
+        "isExtraImport": true,
+        "detail": "rest_framework.permissions",
+        "documentation": {}
+    },
+    {
+        "label": "get_asgi_application",
+        "importPath": "django.core.asgi",
+        "description": "django.core.asgi",
+        "isExtraImport": true,
+        "detail": "django.core.asgi",
+        "documentation": {}
+    },
+    {
+        "label": "JWTAuthentication",
+        "importPath": "rest_framework_simplejwt.authentication",
+        "description": "rest_framework_simplejwt.authentication",
+        "isExtraImport": true,
+        "detail": "rest_framework_simplejwt.authentication",
+        "documentation": {}
+    },
+    {
+        "label": "Path",
+        "importPath": "pathlib",
+        "description": "pathlib",
+        "isExtraImport": true,
+        "detail": "pathlib",
+        "documentation": {}
+    },
+    {
+        "label": "timedelta",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "cloudinary",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "cloudinary",
+        "description": "cloudinary",
+        "detail": "cloudinary",
+        "documentation": {}
+    },
+    {
+        "label": "get_wsgi_application",
+        "importPath": "django.core.wsgi",
+        "description": "django.core.wsgi",
+        "isExtraImport": true,
+        "detail": "django.core.wsgi",
+        "documentation": {}
+    },
+    {
+        "label": "_Known",
+        "kind": 6,
+        "importPath": "frontend.node_modules.flatted.python.flatted",
+        "description": "frontend.node_modules.flatted.python.flatted",
+        "peekOfCode": "class _Known:\n    def __init__(self):\n        self.key = []\n        self.value = []\nclass _String:\n    def __init__(self, value):\n        self.value = value\ndef _array_keys(value):\n    for i in range(len(value)):\n        yield i",
+        "detail": "frontend.node_modules.flatted.python.flatted",
+        "documentation": {}
+    },
+    {
+        "label": "_String",
+        "kind": 6,
+        "importPath": "frontend.node_modules.flatted.python.flatted",
+        "description": "frontend.node_modules.flatted.python.flatted",
+        "peekOfCode": "class _String:\n    def __init__(self, value):\n        self.value = value\ndef _array_keys(value):\n    for i in range(len(value)):\n        yield i\ndef _object_keys(value):\n    for key in value:\n        yield key\ndef _is_array(value):",
+        "detail": "frontend.node_modules.flatted.python.flatted",
+        "documentation": {}
+    },
+    {
+        "label": "parse",
+        "kind": 2,
+        "importPath": "frontend.node_modules.flatted.python.flatted",
+        "description": "frontend.node_modules.flatted.python.flatted",
+        "peekOfCode": "def parse(value, *args, **kwargs):\n    json = _json.loads(value, *args, **kwargs)\n    wrapped = []\n    for value in json:\n        wrapped.append(_wrap(value))\n    input = []\n    for value in wrapped:\n        if isinstance(value, _String):\n            input.append(value.value)\n        else:",
+        "detail": "frontend.node_modules.flatted.python.flatted",
+        "documentation": {}
+    },
+    {
+        "label": "stringify",
+        "kind": 2,
+        "importPath": "frontend.node_modules.flatted.python.flatted",
+        "description": "frontend.node_modules.flatted.python.flatted",
+        "peekOfCode": "def stringify(value, *args, **kwargs):\n    known = _Known()\n    input = []\n    output = []\n    i = int(_index(known, input, value))\n    while i < len(input):\n        output.append(_transform(known, input, input[i]))\n        i += 1\n    return _json.dumps(output, *args, **kwargs)",
+        "detail": "frontend.node_modules.flatted.python.flatted",
+        "documentation": {}
+    },
+    {
+        "label": "bin_dir",
+        "kind": 5,
+        "importPath": "venv.Scripts.activate_this",
+        "description": "venv.Scripts.activate_this",
+        "peekOfCode": "bin_dir = os.path.dirname(abs_file)\nbase = bin_dir[: -len('Scripts') - 1]  # strip away the bin part from the __file__, plus the path separator\n# prepend bin to PATH (this file is inside the bin directory)\nos.environ[\"PATH\"] = os.pathsep.join([bin_dir, *os.environ.get(\"PATH\", \"\").split(os.pathsep)])\nos.environ[\"VIRTUAL_ENV\"] = base  # virtual env is right above bin directory\nos.environ[\"VIRTUAL_ENV_PROMPT\"] = '' or os.path.basename(base)\n# add the virtual environments libraries to the host python import mechanism\nprev_length = len(sys.path)\nfor lib in '..\\\\Lib\\\\site-packages'.split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))",
+        "detail": "venv.Scripts.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "base",
+        "kind": 5,
+        "importPath": "venv.Scripts.activate_this",
+        "description": "venv.Scripts.activate_this",
+        "peekOfCode": "base = bin_dir[: -len('Scripts') - 1]  # strip away the bin part from the __file__, plus the path separator\n# prepend bin to PATH (this file is inside the bin directory)\nos.environ[\"PATH\"] = os.pathsep.join([bin_dir, *os.environ.get(\"PATH\", \"\").split(os.pathsep)])\nos.environ[\"VIRTUAL_ENV\"] = base  # virtual env is right above bin directory\nos.environ[\"VIRTUAL_ENV_PROMPT\"] = '' or os.path.basename(base)\n# add the virtual environments libraries to the host python import mechanism\nprev_length = len(sys.path)\nfor lib in '..\\\\Lib\\\\site-packages'.split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))\n    site.addsitedir(path.decode(\"utf-8\") if '' else path)",
+        "detail": "venv.Scripts.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "os.environ[\"PATH\"]",
+        "kind": 5,
+        "importPath": "venv.Scripts.activate_this",
+        "description": "venv.Scripts.activate_this",
+        "peekOfCode": "os.environ[\"PATH\"] = os.pathsep.join([bin_dir, *os.environ.get(\"PATH\", \"\").split(os.pathsep)])\nos.environ[\"VIRTUAL_ENV\"] = base  # virtual env is right above bin directory\nos.environ[\"VIRTUAL_ENV_PROMPT\"] = '' or os.path.basename(base)\n# add the virtual environments libraries to the host python import mechanism\nprev_length = len(sys.path)\nfor lib in '..\\\\Lib\\\\site-packages'.split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))\n    site.addsitedir(path.decode(\"utf-8\") if '' else path)\nsys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]\nsys.real_prefix = sys.prefix",
+        "detail": "venv.Scripts.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "os.environ[\"VIRTUAL_ENV\"]",
+        "kind": 5,
+        "importPath": "venv.Scripts.activate_this",
+        "description": "venv.Scripts.activate_this",
+        "peekOfCode": "os.environ[\"VIRTUAL_ENV\"] = base  # virtual env is right above bin directory\nos.environ[\"VIRTUAL_ENV_PROMPT\"] = '' or os.path.basename(base)\n# add the virtual environments libraries to the host python import mechanism\nprev_length = len(sys.path)\nfor lib in '..\\\\Lib\\\\site-packages'.split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))\n    site.addsitedir(path.decode(\"utf-8\") if '' else path)\nsys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]\nsys.real_prefix = sys.prefix\nsys.prefix = base",
+        "detail": "venv.Scripts.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "os.environ[\"VIRTUAL_ENV_PROMPT\"]",
+        "kind": 5,
+        "importPath": "venv.Scripts.activate_this",
+        "description": "venv.Scripts.activate_this",
+        "peekOfCode": "os.environ[\"VIRTUAL_ENV_PROMPT\"] = '' or os.path.basename(base)\n# add the virtual environments libraries to the host python import mechanism\nprev_length = len(sys.path)\nfor lib in '..\\\\Lib\\\\site-packages'.split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))\n    site.addsitedir(path.decode(\"utf-8\") if '' else path)\nsys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]\nsys.real_prefix = sys.prefix\nsys.prefix = base",
+        "detail": "venv.Scripts.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "prev_length",
+        "kind": 5,
+        "importPath": "venv.Scripts.activate_this",
+        "description": "venv.Scripts.activate_this",
+        "peekOfCode": "prev_length = len(sys.path)\nfor lib in '..\\\\Lib\\\\site-packages'.split(os.pathsep):\n    path = os.path.realpath(os.path.join(bin_dir, lib))\n    site.addsitedir(path.decode(\"utf-8\") if '' else path)\nsys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]\nsys.real_prefix = sys.prefix\nsys.prefix = base",
+        "detail": "venv.Scripts.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "sys.path[:]",
+        "kind": 5,
+        "importPath": "venv.Scripts.activate_this",
+        "description": "venv.Scripts.activate_this",
+        "peekOfCode": "sys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]\nsys.real_prefix = sys.prefix\nsys.prefix = base",
+        "detail": "venv.Scripts.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "sys.real_prefix",
+        "kind": 5,
+        "importPath": "venv.Scripts.activate_this",
+        "description": "venv.Scripts.activate_this",
+        "peekOfCode": "sys.real_prefix = sys.prefix\nsys.prefix = base",
+        "detail": "venv.Scripts.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "sys.prefix",
+        "kind": 5,
+        "importPath": "venv.Scripts.activate_this",
+        "description": "venv.Scripts.activate_this",
+        "peekOfCode": "sys.prefix = base",
+        "detail": "venv.Scripts.activate_this",
+        "documentation": {}
+    },
+    {
+        "label": "Migration",
+        "kind": 6,
+        "importPath": "vita.migrations.0001_initial",
+        "description": "vita.migrations.0001_initial",
+        "peekOfCode": "class Migration(migrations.Migration):\n    initial = True\n    dependencies = [\n        ('auth', '0012_alter_user_first_name_max_length'),\n    ]\n    operations = [\n        migrations.CreateModel(\n            name='User',\n            fields=[\n                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),",
+        "detail": "vita.migrations.0001_initial",
+        "documentation": {}
+    },
+    {
+        "label": "Migration",
+        "kind": 6,
+        "importPath": "vita.migrations.0002_alter_produit_id_vendeur",
+        "description": "vita.migrations.0002_alter_produit_id_vendeur",
+        "peekOfCode": "class Migration(migrations.Migration):\n    dependencies = [\n        ('vita', '0001_initial'),\n    ]\n    operations = [\n        migrations.AlterField(\n            model_name='produit',\n            name='id_vendeur',\n            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='produits', to='vita.profilvendeur'),\n        ),",
+        "detail": "vita.migrations.0002_alter_produit_id_vendeur",
+        "documentation": {}
+    },
+    {
+        "label": "Migration",
+        "kind": 6,
+        "importPath": "vita.migrations.0003_alter_produit_id_vendeur",
+        "description": "vita.migrations.0003_alter_produit_id_vendeur",
+        "peekOfCode": "class Migration(migrations.Migration):\n    dependencies = [\n        ('vita', '0002_alter_produit_id_vendeur'),\n    ]\n    operations = [\n        migrations.AlterField(\n            model_name='produit',\n            name='id_vendeur',\n            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='produits', to=settings.AUTH_USER_MODEL),\n        ),",
+        "detail": "vita.migrations.0003_alter_produit_id_vendeur",
+        "documentation": {}
+    },
+    {
+        "label": "VitaConfig",
+        "kind": 6,
+        "importPath": "vita.apps",
+        "description": "vita.apps",
+        "peekOfCode": "class VitaConfig(AppConfig):\n    name = 'vita'\n    def ready(self):\n        import vita.signals",
+        "detail": "vita.apps",
+        "documentation": {}
+    },
+    {
+        "label": "User",
+        "kind": 6,
+        "importPath": "vita.models",
+        "description": "vita.models",
+        "peekOfCode": "class User(AbstractUser):\n    class TypeUser(models.TextChoices):\n        CLIENT = \"client\", \"Client\"\n        VENDEUR = \"vendeur\", \"Vendeur\"\n    # نقدر نحتفظ بـ username أو نحذفه لاحقاً\n    email = models.EmailField(unique=True)\n    nom = models.CharField(max_length=100)\n    prenom = models.CharField(max_length=100)\n    telephone = models.CharField(max_length=20, blank=True, null=True)\n    type_user = models.CharField(",
+        "detail": "vita.models",
+        "documentation": {}
+    },
+    {
+        "label": "ProfilClient",
+        "kind": 6,
+        "importPath": "vita.models",
+        "description": "vita.models",
+        "peekOfCode": "class ProfilClient(models.Model):\n    user = models.OneToOneField(\n        User,\n        on_delete=models.CASCADE,\n        primary_key=True,\n        related_name=\"profil_client\",\n    )\n    adresse_livraison = models.TextField()\n    def __str__(self):\n        return f\"Client: {self.user.username}\"",
+        "detail": "vita.models",
+        "documentation": {}
+    },
+    {
+        "label": "ProfilVendeur",
+        "kind": 6,
+        "importPath": "vita.models",
+        "description": "vita.models",
+        "peekOfCode": "class ProfilVendeur(models.Model):\n    class Statut(models.TextChoices):\n        EN_ATTENTE = \"en_attente\", \"En attente\"\n        APPROUVE = \"approuve\", \"Approuvé\"\n        REJETE = \"rejete\", \"Rejeté\"\n    user = models.OneToOneField(\n        User,\n        on_delete=models.CASCADE,\n        primary_key=True,\n        related_name=\"profil_vendeur\",",
+        "detail": "vita.models",
+        "documentation": {}
+    },
+    {
+        "label": "Categorie",
+        "kind": 6,
+        "importPath": "vita.models",
+        "description": "vita.models",
+        "peekOfCode": "class Categorie(models.Model):\n    categorie_parente = models.ForeignKey(\n        \"self\",\n        on_delete=models.SET_NULL,\n        null=True,\n        blank=True,\n        related_name=\"sous_categories\",\n    )\n    nom = models.CharField(max_length=100)\n    description = models.TextField(blank=True, null=True)",
+        "detail": "vita.models",
+        "documentation": {}
+    },
+    {
+        "label": "Produit",
+        "kind": 6,
+        "importPath": "vita.models",
+        "description": "vita.models",
+        "peekOfCode": "class Produit(models.Model):\n    id_vendeur = models.ForeignKey(\n        User,\n        on_delete=models.CASCADE,\n        related_name=\"produits\",\n    )\n    id_categorie = models.ForeignKey(\n        Categorie,\n        on_delete=models.PROTECT,\n        related_name=\"produits\",",
+        "detail": "vita.models",
+        "documentation": {}
+    },
+    {
+        "label": "Panier",
+        "kind": 6,
+        "importPath": "vita.models",
+        "description": "vita.models",
+        "peekOfCode": "class Panier(models.Model):\n    user = models.ForeignKey(\n        User,\n        on_delete=models.CASCADE,\n        null=True,\n        blank=True,\n        related_name=\"paniers\",\n    )\n    created_at = models.DateTimeField(default=timezone.now)\n    updated_at = models.DateTimeField(auto_now=True)",
+        "detail": "vita.models",
+        "documentation": {}
+    },
+    {
+        "label": "LignePanier",
+        "kind": 6,
+        "importPath": "vita.models",
+        "description": "vita.models",
+        "peekOfCode": "class LignePanier(models.Model):\n    id_panier = models.ForeignKey(\n        Panier,\n        on_delete=models.CASCADE,\n        related_name=\"lignes\",\n    )\n    id_produit = models.ForeignKey(\n        Produit,\n        on_delete=models.CASCADE,\n        related_name=\"lignes_panier\",",
+        "detail": "vita.models",
+        "documentation": {}
+    },
+    {
+        "label": "Commande",
+        "kind": 6,
+        "importPath": "vita.models",
+        "description": "vita.models",
+        "peekOfCode": "class Commande(models.Model):\n    class Statut(models.TextChoices):\n        EN_ATTENTE_PAIEMENT = \"en_attente_paiement\", \"En attente de paiement\"\n        CONFIRMEE = \"confirmee\", \"Confirmée\"\n        EN_PREPARATION = \"en_preparation\", \"En préparation\"\n        EXPEDIEE = \"expediee\", \"Expédiée\"\n        LIVREE = \"livree\", \"Livrée\"\n        ANNULEE = \"annulee\", \"Annulée\"\n    numero_commande = models.CharField(max_length=50, unique=True)\n    id_client = models.ForeignKey(",
+        "detail": "vita.models",
+        "documentation": {}
+    },
+    {
+        "label": "LigneCommande",
+        "kind": 6,
+        "importPath": "vita.models",
+        "description": "vita.models",
+        "peekOfCode": "class LigneCommande(models.Model):\n    id_commande = models.ForeignKey(\n        Commande,\n        on_delete=models.CASCADE,\n        related_name=\"lignes\",\n    )\n    id_produit = models.ForeignKey(\n        Produit,\n        on_delete=models.PROTECT,\n        related_name=\"lignes_commande\",",
+        "detail": "vita.models",
+        "documentation": {}
+    },
+    {
+        "label": "Avis",
+        "kind": 6,
+        "importPath": "vita.models",
+        "description": "vita.models",
+        "peekOfCode": "class Avis(models.Model):\n    id_ligne_commande = models.OneToOneField(\n        LigneCommande,\n        on_delete=models.CASCADE,\n        related_name=\"avis\",\n    )\n    note = models.IntegerField()\n    commentaire = models.TextField(blank=True, null=True)\n    created_at = models.DateTimeField(default=timezone.now)\n    def __str__(self):",
+        "detail": "vita.models",
+        "documentation": {}
+    },
+    {
+        "label": "Favori",
+        "kind": 6,
+        "importPath": "vita.models",
+        "description": "vita.models",
+        "peekOfCode": "class Favori(models.Model):\n    user = models.ForeignKey(\n        User,\n        on_delete=models.CASCADE,\n        related_name=\"favoris\",\n    )\n    id_produit = models.ForeignKey(\n        Produit,\n        on_delete=models.CASCADE,\n        related_name=\"favoris\",",
+        "detail": "vita.models",
+        "documentation": {}
+    },
+    {
+        "label": "RegisterSerializer",
+        "kind": 6,
+        "importPath": "vita.serializers",
+        "description": "vita.serializers",
+        "peekOfCode": "class RegisterSerializer(serializers.ModelSerializer):\n    password = serializers.CharField(write_only=True)\n    class Meta:\n        model = User\n        fields = [\n            'username',\n            'email',\n            'password',\n            'nom',\n            'prenom',",
+        "detail": "vita.serializers",
+        "documentation": {}
+    },
+    {
+        "label": "LoginSerializer",
+        "kind": 6,
+        "importPath": "vita.serializers",
+        "description": "vita.serializers",
+        "peekOfCode": "class LoginSerializer(serializers.Serializer):\n    username = serializers.CharField()\n    password = serializers.CharField(write_only=True)\n    remember_me = serializers.BooleanField(default=False)\nclass MeSerializer(serializers.ModelSerializer):\n    class Meta:\n        model = User\n        fields = [\"id\", \"username\", \"email\",\"nom\",\"prenom\",\"telephone\",\"type_user\",\"date_joined\"]\n# serializer\nclass CategorySerializer(serializers.ModelSerializer):",
+        "detail": "vita.serializers",
+        "documentation": {}
+    },
+    {
+        "label": "MeSerializer",
+        "kind": 6,
+        "importPath": "vita.serializers",
+        "description": "vita.serializers",
+        "peekOfCode": "class MeSerializer(serializers.ModelSerializer):\n    class Meta:\n        model = User\n        fields = [\"id\", \"username\", \"email\",\"nom\",\"prenom\",\"telephone\",\"type_user\",\"date_joined\"]\n# serializer\nclass CategorySerializer(serializers.ModelSerializer):\n    categorie_parente = serializers.CharField(source='categorie_parente.nom', read_only=True)\n    class Meta:\n        model = Categorie\n        fields = [\"id\", \"nom\",\"description\",\"created_at\", \"categorie_parente\"]",
+        "detail": "vita.serializers",
+        "documentation": {}
+    },
+    {
+        "label": "CategorySerializer",
+        "kind": 6,
+        "importPath": "vita.serializers",
+        "description": "vita.serializers",
+        "peekOfCode": "class CategorySerializer(serializers.ModelSerializer):\n    categorie_parente = serializers.CharField(source='categorie_parente.nom', read_only=True)\n    class Meta:\n        model = Categorie\n        fields = [\"id\", \"nom\",\"description\",\"created_at\", \"categorie_parente\"]\nclass ProductSerializer(serializers.ModelSerializer):\n    category_name = serializers.CharField(source='id_categorie.nom', read_only=True)\n    seller_name = serializers.CharField(source='id_vendeur.username', read_only=True)\n    class Meta:\n        model = Produit",
+        "detail": "vita.serializers",
+        "documentation": {}
+    },
+    {
+        "label": "ProductSerializer",
+        "kind": 6,
+        "importPath": "vita.serializers",
+        "description": "vita.serializers",
+        "peekOfCode": "class ProductSerializer(serializers.ModelSerializer):\n    category_name = serializers.CharField(source='id_categorie.nom', read_only=True)\n    seller_name = serializers.CharField(source='id_vendeur.username', read_only=True)\n    class Meta:\n        model = Produit\n        fields = [\"id\", \"nom\", \"description\", \"prix\", \"quantite_stock\", \"note_moyenne\", \"url\", \"id_categorie\", \"category_name\", \"id_vendeur\", \"seller_name\"]",
+        "detail": "vita.serializers",
+        "documentation": {}
+    },
+    {
+        "label": "create_user_profile",
+        "kind": 2,
+        "importPath": "vita.signals",
+        "description": "vita.signals",
+        "peekOfCode": "def create_user_profile(sender, instance, created, **kwargs):\n    if created:\n        if instance.type_user == \"client\":\n            ProfilClient.objects.create(user=instance)\n        elif instance.type_user == \"vendeur\":\n            ProfilVendeur.objects.create(\n                user=instance,\n                statut=\"en_attente\"  \n            )",
+        "detail": "vita.signals",
+        "documentation": {}
+    },
+    {
+        "label": "router",
+        "kind": 5,
+        "importPath": "vita.urls",
+        "description": "vita.urls",
+        "peekOfCode": "router = DefaultRouter()\nrouter.register('register', AuthViewSet, basename='register')\nrouter.register('login', AuthLoginViewSet, basename='login')\nrouter.register('auth', MeAuthViewSet, basename='auth')\nrouter.register(\"products\", ProductViewSet, basename=\"products\")\nrouter.register(\"categories\", CategoryViewSet)\nurlpatterns = [\n    path('', include(router.urls))\n]",
+        "detail": "vita.urls",
+        "documentation": {}
+    },
+    {
+        "label": "urlpatterns",
+        "kind": 5,
+        "importPath": "vita.urls",
+        "description": "vita.urls",
+        "peekOfCode": "urlpatterns = [\n    path('', include(router.urls))\n]",
+        "detail": "vita.urls",
+        "documentation": {}
+    },
+    {
+        "label": "AuthViewSet",
+        "kind": 6,
+        "importPath": "vita.views",
+        "description": "vita.views",
+        "peekOfCode": "class AuthViewSet(CreateModelMixin, viewsets.GenericViewSet):\n    queryset = User.objects.all()\n    serializer_class = RegisterSerializer\n    def create(self, request, *args, **kwargs):\n        serializer = self.get_serializer(data=request.data)\n        if serializer.is_valid():\n            user = serializer.save()\n            refresh = RefreshToken.for_user(user)\n            response = Response({\n                \"message\": \"User created successfully\",",
+        "detail": "vita.views",
+        "documentation": {}
+    },
+    {
+        "label": "AuthLoginViewSet",
+        "kind": 6,
+        "importPath": "vita.views",
+        "description": "vita.views",
+        "peekOfCode": "class AuthLoginViewSet(viewsets.GenericViewSet):\n    serializer_class = LoginSerializer\n    def create(self, request):\n        serializer = self.get_serializer(data=request.data)\n        if serializer.is_valid():\n            username = serializer.validated_data['username']\n            password = serializer.validated_data['password']\n            remember_me = serializer.validated_data['remember_me']\n            user = authenticate(username=username, password=password)\n            if user is None:",
+        "detail": "vita.views",
+        "documentation": {}
+    },
+    {
+        "label": "MeAuthViewSet",
+        "kind": 6,
+        "importPath": "vita.views",
+        "description": "vita.views",
+        "peekOfCode": "class MeAuthViewSet(viewsets.ViewSet):\n    @action(detail=False, methods=[\"get\"], permission_classes=[IsAuthenticated])\n    def me(self, request):\n        serializer = MeSerializer(request.user)\n        return Response(serializer.data)\n###############################----Products Vendor\nclass ProductViewSet(viewsets.ModelViewSet):\n    serializer_class = ProductSerializer\n    queryset = Produit.objects.all()\n    def create(self, request):",
+        "detail": "vita.views",
+        "documentation": {}
+    },
+    {
+        "label": "ProductViewSet",
+        "kind": 6,
+        "importPath": "vita.views",
+        "description": "vita.views",
+        "peekOfCode": "class ProductViewSet(viewsets.ModelViewSet):\n    serializer_class = ProductSerializer\n    queryset = Produit.objects.all()\n    def create(self, request):\n        data = request.data.copy()\n        print(data)\n        # ✅ رفع الصورة إلى Cloudinary\n        image = request.FILES.get(\"url\")\n        if image:\n            upload_result = cloudinary.uploader.upload(image)",
+        "detail": "vita.views",
+        "documentation": {}
+    },
+    {
+        "label": "CategoryViewSet",
+        "kind": 6,
+        "importPath": "vita.views",
+        "description": "vita.views",
+        "peekOfCode": "class CategoryViewSet(viewsets.ModelViewSet):\n    queryset = Categorie.objects.all()\n    serializer_class = CategorySerializer",
+        "detail": "vita.views",
+        "documentation": {}
+    },
+    {
+        "label": "_Known",
+        "kind": 6,
+        "importPath": "vita market fontend.node_modules.flatted.python.flatted",
+        "description": "vita market fontend.node_modules.flatted.python.flatted",
+        "peekOfCode": "class _Known:\n    def __init__(self):\n        self.key = []\n        self.value = []\nclass _String:\n    def __init__(self, value):\n        self.value = value\ndef _array_keys(value):\n    for i in range(len(value)):\n        yield i",
+        "detail": "vita market fontend.node_modules.flatted.python.flatted",
+        "documentation": {}
+    },
+    {
+        "label": "_String",
+        "kind": 6,
+        "importPath": "vita market fontend.node_modules.flatted.python.flatted",
+        "description": "vita market fontend.node_modules.flatted.python.flatted",
+        "peekOfCode": "class _String:\n    def __init__(self, value):\n        self.value = value\ndef _array_keys(value):\n    for i in range(len(value)):\n        yield i\ndef _object_keys(value):\n    for key in value:\n        yield key\ndef _is_array(value):",
+        "detail": "vita market fontend.node_modules.flatted.python.flatted",
+        "documentation": {}
+    },
+    {
+        "label": "parse",
+        "kind": 2,
+        "importPath": "vita market fontend.node_modules.flatted.python.flatted",
+        "description": "vita market fontend.node_modules.flatted.python.flatted",
+        "peekOfCode": "def parse(value, *args, **kwargs):\n    json = _json.loads(value, *args, **kwargs)\n    wrapped = []\n    for value in json:\n        wrapped.append(_wrap(value))\n    input = []\n    for value in wrapped:\n        if isinstance(value, _String):\n            input.append(value.value)\n        else:",
+        "detail": "vita market fontend.node_modules.flatted.python.flatted",
+        "documentation": {}
+    },
+    {
+        "label": "stringify",
+        "kind": 2,
+        "importPath": "vita market fontend.node_modules.flatted.python.flatted",
+        "description": "vita market fontend.node_modules.flatted.python.flatted",
+        "peekOfCode": "def stringify(value, *args, **kwargs):\n    known = _Known()\n    input = []\n    output = []\n    i = int(_index(known, input, value))\n    while i < len(input):\n        output.append(_transform(known, input, input[i]))\n        i += 1\n    return _json.dumps(output, *args, **kwargs)",
+        "detail": "vita market fontend.node_modules.flatted.python.flatted",
+        "documentation": {}
+    },
+    {
+        "label": "application",
+        "kind": 5,
+        "importPath": "vita_market.asgi",
+        "description": "vita_market.asgi",
+        "peekOfCode": "application = get_asgi_application()",
+        "detail": "vita_market.asgi",
+        "documentation": {}
+    },
+    {
+        "label": "CookieJWTAuthentication",
+        "kind": 6,
+        "importPath": "vita_market.authentication",
+        "description": "vita_market.authentication",
+        "peekOfCode": "class CookieJWTAuthentication(JWTAuthentication):\n    def authenticate(self, request):\n        access_token = request.COOKIES.get(\"access_token\")\n        if access_token is None:\n            return None\n        validated_token = self.get_validated_token(access_token)\n        user = self.get_user(validated_token)\n        return (user, validated_token)",
+        "detail": "vita_market.authentication",
+        "documentation": {}
+    },
+    {
+        "label": "REST_FRAMEWORK",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "REST_FRAMEWORK = {\n    'DEFAULT_AUTHENTICATION_CLASSES': (\n        'vita_market.authentication.CookieJWTAuthentication',\n    ),\n}\nSIMPLE_JWT = {\n    \"ACCESS_TOKEN_LIFETIME\": timedelta(days=1),\n    \"REFRESH_TOKEN_LIFETIME\": timedelta(days=30),\n}\n# Build paths inside the project like this: BASE_DIR / 'subdir'.",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "SIMPLE_JWT",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "SIMPLE_JWT = {\n    \"ACCESS_TOKEN_LIFETIME\": timedelta(days=1),\n    \"REFRESH_TOKEN_LIFETIME\": timedelta(days=30),\n}\n# Build paths inside the project like this: BASE_DIR / 'subdir'.\nBASE_DIR = Path(__file__).resolve().parent.parent\n# Quick-start development settings - unsuitable for production\n# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/\n# SECURITY WARNING: keep the secret key used in production secret!\nSECRET_KEY = 'django-insecure-7)#8t(uq5mi!ep=bdxldlew@s#pwe2c3r!%27(^*727^0nj$!='",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "BASE_DIR",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "BASE_DIR = Path(__file__).resolve().parent.parent\n# Quick-start development settings - unsuitable for production\n# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/\n# SECURITY WARNING: keep the secret key used in production secret!\nSECRET_KEY = 'django-insecure-7)#8t(uq5mi!ep=bdxldlew@s#pwe2c3r!%27(^*727^0nj$!='\n# SECURITY WARNING: don't run with debug turned on in production!\nDEBUG = True\nALLOWED_HOSTS = []\n# Application definition\nINSTALLED_APPS = [",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "SECRET_KEY",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "SECRET_KEY = 'django-insecure-7)#8t(uq5mi!ep=bdxldlew@s#pwe2c3r!%27(^*727^0nj$!='\n# SECURITY WARNING: don't run with debug turned on in production!\nDEBUG = True\nALLOWED_HOSTS = []\n# Application definition\nINSTALLED_APPS = [\n    'vita.apps.VitaConfig',\n    'django.contrib.admin',\n    'django.contrib.auth',\n    'django.contrib.contenttypes',",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "DEBUG",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "DEBUG = True\nALLOWED_HOSTS = []\n# Application definition\nINSTALLED_APPS = [\n    'vita.apps.VitaConfig',\n    'django.contrib.admin',\n    'django.contrib.auth',\n    'django.contrib.contenttypes',\n    'django.contrib.sessions',\n    'django.contrib.messages',",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "ALLOWED_HOSTS",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "ALLOWED_HOSTS = []\n# Application definition\nINSTALLED_APPS = [\n    'vita.apps.VitaConfig',\n    'django.contrib.admin',\n    'django.contrib.auth',\n    'django.contrib.contenttypes',\n    'django.contrib.sessions',\n    'django.contrib.messages',\n    'django.contrib.staticfiles',",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "INSTALLED_APPS",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "INSTALLED_APPS = [\n    'vita.apps.VitaConfig',\n    'django.contrib.admin',\n    'django.contrib.auth',\n    'django.contrib.contenttypes',\n    'django.contrib.sessions',\n    'django.contrib.messages',\n    'django.contrib.staticfiles',\n    \"corsheaders\",\n    \"rest_framework\"",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "CORS_ALLOWED_ORIGINS",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "CORS_ALLOWED_ORIGINS = [\n    \"http://localhost:3000\",\n]\nCORS_ALLOW_CREDENTIALS = True\ncloudinary.config(\n    cloud_name=\"dspmgbmfb\",\n    api_key=\"546141733241376\",\n    api_secret=\"s5pLslGIlAENcF4q-rYlJ_uQR0I\"\n)\nDEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "CORS_ALLOW_CREDENTIALS",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "CORS_ALLOW_CREDENTIALS = True\ncloudinary.config(\n    cloud_name=\"dspmgbmfb\",\n    api_key=\"546141733241376\",\n    api_secret=\"s5pLslGIlAENcF4q-rYlJ_uQR0I\"\n)\nDEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'\nMIDDLEWARE = [\n    'corsheaders.middleware.CorsMiddleware',\n    'django.middleware.security.SecurityMiddleware',",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "DEFAULT_FILE_STORAGE",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'\nMIDDLEWARE = [\n    'corsheaders.middleware.CorsMiddleware',\n    'django.middleware.security.SecurityMiddleware',\n    'django.contrib.sessions.middleware.SessionMiddleware',\n    'django.middleware.common.CommonMiddleware',\n    'django.middleware.csrf.CsrfViewMiddleware',\n    'django.contrib.auth.middleware.AuthenticationMiddleware',\n    'django.contrib.messages.middleware.MessageMiddleware',\n    'django.middleware.clickjacking.XFrameOptionsMiddleware',",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "MIDDLEWARE",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "MIDDLEWARE = [\n    'corsheaders.middleware.CorsMiddleware',\n    'django.middleware.security.SecurityMiddleware',\n    'django.contrib.sessions.middleware.SessionMiddleware',\n    'django.middleware.common.CommonMiddleware',\n    'django.middleware.csrf.CsrfViewMiddleware',\n    'django.contrib.auth.middleware.AuthenticationMiddleware',\n    'django.contrib.messages.middleware.MessageMiddleware',\n    'django.middleware.clickjacking.XFrameOptionsMiddleware',\n]",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "ROOT_URLCONF",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "ROOT_URLCONF = 'vita_market.urls'\nTEMPLATES = [\n    {\n        'BACKEND': 'django.template.backends.django.DjangoTemplates',\n        'DIRS': [],\n        'APP_DIRS': True,\n        'OPTIONS': {\n            'context_processors': [\n                'django.template.context_processors.request',\n                'django.contrib.auth.context_processors.auth',",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "TEMPLATES",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "TEMPLATES = [\n    {\n        'BACKEND': 'django.template.backends.django.DjangoTemplates',\n        'DIRS': [],\n        'APP_DIRS': True,\n        'OPTIONS': {\n            'context_processors': [\n                'django.template.context_processors.request',\n                'django.contrib.auth.context_processors.auth',\n                'django.contrib.messages.context_processors.messages',",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "WSGI_APPLICATION",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "WSGI_APPLICATION = 'vita_market.wsgi.application'\nCSRF_TRUSTED_ORIGINS = [\n    \"http://localhost:3000\",\n]\n# Database\n# https://docs.djangoproject.com/en/6.0/ref/settings/#databases\nDATABASES = {\n    'default': {\n        'ENGINE': 'django.db.backends.sqlite3',\n        'NAME': BASE_DIR / 'db.sqlite3',",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "CSRF_TRUSTED_ORIGINS",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "CSRF_TRUSTED_ORIGINS = [\n    \"http://localhost:3000\",\n]\n# Database\n# https://docs.djangoproject.com/en/6.0/ref/settings/#databases\nDATABASES = {\n    'default': {\n        'ENGINE': 'django.db.backends.sqlite3',\n        'NAME': BASE_DIR / 'db.sqlite3',\n    }",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "DATABASES",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "DATABASES = {\n    'default': {\n        'ENGINE': 'django.db.backends.sqlite3',\n        'NAME': BASE_DIR / 'db.sqlite3',\n    }\n}\n# Password validation\n# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators\nAUTH_PASSWORD_VALIDATORS = [\n    {",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "AUTH_PASSWORD_VALIDATORS",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "AUTH_PASSWORD_VALIDATORS = [\n    {\n        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',\n    },\n    {\n        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',\n    },\n    {\n        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',\n    },",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "AUTH_USER_MODEL",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "AUTH_USER_MODEL = 'vita.User'\n# Internationalization\n# https://docs.djangoproject.com/en/6.0/topics/i18n/\nLANGUAGE_CODE = 'en-us'\nTIME_ZONE = 'UTC'\nUSE_I18N = True\nUSE_TZ = True\n# Static files (CSS, JavaScript, Images)\n# https://docs.djangoproject.com/en/6.0/howto/static-files/\nSTATIC_URL = 'static/'",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "LANGUAGE_CODE",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "LANGUAGE_CODE = 'en-us'\nTIME_ZONE = 'UTC'\nUSE_I18N = True\nUSE_TZ = True\n# Static files (CSS, JavaScript, Images)\n# https://docs.djangoproject.com/en/6.0/howto/static-files/\nSTATIC_URL = 'static/'",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "TIME_ZONE",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "TIME_ZONE = 'UTC'\nUSE_I18N = True\nUSE_TZ = True\n# Static files (CSS, JavaScript, Images)\n# https://docs.djangoproject.com/en/6.0/howto/static-files/\nSTATIC_URL = 'static/'",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "USE_I18N",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "USE_I18N = True\nUSE_TZ = True\n# Static files (CSS, JavaScript, Images)\n# https://docs.djangoproject.com/en/6.0/howto/static-files/\nSTATIC_URL = 'static/'",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "USE_TZ",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "USE_TZ = True\n# Static files (CSS, JavaScript, Images)\n# https://docs.djangoproject.com/en/6.0/howto/static-files/\nSTATIC_URL = 'static/'",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "STATIC_URL",
+        "kind": 5,
+        "importPath": "vita_market.settings",
+        "description": "vita_market.settings",
+        "peekOfCode": "STATIC_URL = 'static/'",
+        "detail": "vita_market.settings",
+        "documentation": {}
+    },
+    {
+        "label": "urlpatterns",
+        "kind": 5,
+        "importPath": "vita_market.urls",
+        "description": "vita_market.urls",
+        "peekOfCode": "urlpatterns = [\n    path('admin/', admin.site.urls),\n    path('', include('vita.urls')),\n]",
+        "detail": "vita_market.urls",
+        "documentation": {}
+    },
+    {
+        "label": "application",
+        "kind": 5,
+        "importPath": "vita_market.wsgi",
+        "description": "vita_market.wsgi",
+        "peekOfCode": "application = get_wsgi_application()",
+        "detail": "vita_market.wsgi",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "manage",
+        "description": "manage",
+        "peekOfCode": "def main():\n    \"\"\"Run administrative tasks.\"\"\"\n    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'vita_market.settings')\n    try:\n        from django.core.management import execute_from_command_line\n    except ImportError as exc:\n        raise ImportError(\n            \"Couldn't import Django. Are you sure it's installed and \"\n            \"available on your PYTHONPATH environment variable? Did you \"\n            \"forget to activate a virtual environment?\"",
+        "detail": "manage",
+        "documentation": {}
+    }
+]
