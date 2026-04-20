@@ -1,13 +1,17 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.mixins import CreateModelMixin
-from .models import User,Produit,Categorie
-from .serializers import RegisterSerializer,LoginSerializer,MeSerializer,ProductSerializer,CategorySerializer
+from .models import User,Produit,Categorie,Panier,LignePanier,ProfilClient,ProfilVendeur,Commande,LigneCommande,Favori,Avis
+from .serializers import RegisterSerializer,LoginSerializer,MeSerializer,ProductSerializer,CategorySerializer,PanierSerializer,LignePanierUpdateSerializer,ProfilClientSerializer,ProfilVendeurSerializer,CommandeSerializer,FavoriSerializer,AvisSerializer,MeUpdateSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import action
 from django.contrib.auth import authenticate
 import cloudinary.uploader
+from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
+from django.db import transaction
+from django.db.models import Avg
+from rest_framework import serializers
 # Create your views here.
 
 class AuthViewSet(CreateModelMixin, viewsets.GenericViewSet):
@@ -80,6 +84,15 @@ class AuthLoginViewSet(viewsets.GenericViewSet):
                 access_expiry = 60 * 60 * 24 * 30  # 30 days
             else:
                 access_expiry = 60 * 60 * 24  # 1 day
+
+
+
+            if user.type_user == "client":
+                profil = ProfilClient.objects.get(user=user)
+                info = ProfilClientSerializer(profil).data
+            else:
+                profil = ProfilVendeur.objects.get(user=user)
+                info = ProfilVendeurSerializer(profil).data
             response = Response({
                 "message": "Login successful",
                 'user':{
@@ -89,6 +102,7 @@ class AuthLoginViewSet(viewsets.GenericViewSet):
                     'prenom':user.prenom,
                     'telephone':user.telephone,
                     'type_user':user.type_user,
+                    'info':info,
                 }
             })
 
@@ -121,6 +135,28 @@ class MeAuthViewSet(viewsets.ViewSet):
     def me(self, request):
         serializer = MeSerializer(request.user)
         return Response(serializer.data)
+    @action(detail=False, methods=["patch"], url_path="update")
+    def update_me(self, request):
+        user = request.user
+        if User.objects.exclude(id=user.id).filter(email=request.data['email']).exists():
+            return Response({"error": "Email already used"}, status=status.HTTP_400_BAD_REQUEST)
+        if User.objects.exclude(id=user.id).filter(username=request.data['username']).exists():
+            return Response({"error": "Username already used"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = MeUpdateSerializer(user, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(MeSerializer(user).data)
+
+        return Response(serializer.errors, status=400)
+    @action(detail=False, methods=["post"], permission_classes=[IsAuthenticated])
+    def logout(self, request):
+        response = Response({"message": "Logged out"}, status=status.HTTP_200_OK)
+
+        response.delete_cookie("access_token")
+        response.delete_cookie("refresh_token")
+
+        return response
 
 
 ###############################----Products Vendor
@@ -150,9 +186,14 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=400)
 
     def get_queryset(self):
-       
-        # ترجع فقط المنتجات الخاصة بالـ user الحالي
-        return Produit.objects.filter(id_vendeur=self.request.user)
+        user = self.request.user
+
+        # ✅ client (مش مسجل)
+        if not user.is_authenticated:
+            return Produit.objects.all()
+
+        # ✅ vendor
+        return Produit.objects.filter(id_vendeur=user)
 
     @action(detail=False, methods=['get'], permission_classes=[])
     def all(self, request):
@@ -166,3 +207,240 @@ class ProductViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Categorie.objects.all()
     serializer_class = CategorySerializer
+
+
+class PanierViewSet(viewsets.ModelViewSet):
+    serializer_class = PanierSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Panier.objects.filter(user=self.request.user)
+
+    def get_or_create_panier(self):
+        panier, created = Panier.objects.get_or_create(user=self.request.user)
+        return panier
+
+    @action(detail=False, methods=["post"])
+    def add_product(self, request):
+        produit_id = request.data.get("produit")
+        quantite = int(request.data.get("quantite", 1))
+
+        try:
+            produit = Produit.objects.get(id=produit_id)
+        except Produit.DoesNotExist:
+            return Response({"error": "Produit not found"}, status=404)
+
+        panier = self.get_or_create_panier()
+
+        ligne, created = LignePanier.objects.get_or_create(
+            id_panier=panier,
+            id_produit=produit,
+            defaults={
+                "quantite": quantite,
+                "prix_unitaire": produit.prix,
+            },
+        )
+
+        if not created:
+            ligne.quantite += quantite
+            ligne.save()
+
+        return Response({"message": "Produit ajouté au panier"})
+    @action(detail=False, methods=["get"])
+    def my_panier(self, request):
+        panier = self.get_or_create_panier()
+        serializer = self.get_serializer(panier)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["delete"], url_path="retirer_ligne/(?P<ligne_id>[^/.]+)")
+    def retirer_ligne(self, request, ligne_id=None):
+        ligne = get_object_or_404(LignePanier, id=ligne_id, id_panier__user=request.user)
+        ligne.delete()
+        return Response({"message": "deleted"}, status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=["patch"], url_path="modifier_ligne/(?P<ligne_id>[^/.]+)")
+    def modifier_ligne(self, request, ligne_id=None):
+        ligne = get_object_or_404(LignePanier, id=ligne_id, id_panier__user=request.user)
+        quantite = request.data.get("quantite")
+
+        if int(quantite) <= 0:
+            ligne.delete()
+            return Response({"message": "deleted"}, status=204)
+        serializer = LignePanierUpdateSerializer(ligne, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class CommandeViewSet(viewsets.ModelViewSet):
+    serializer_class = CommandeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Commande.objects.filter(id_client=self.request.user)
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        user = request.user
+
+        # 🛒 نجيب panier
+        panier = Panier.objects.filter(user=user).first()
+
+        if not panier or not panier.lignes.exists():
+            return Response({"error": "Panier vide"}, status=400)
+
+        # ✅ إنشاء commande
+        lignes_panier = LignePanier.objects.filter(id_panier=panier)
+
+        for ligne in lignes_panier:
+            produit = ligne.id_produit
+            if produit.quantite_stock < ligne.quantite:
+                return Response(
+                    {"error": f"Stock insuffisant pour {produit.nom}"},
+                    status=400
+                )
+        commande = Commande.objects.create(
+            id_client=user,
+            nom=request.data.get("nom"),
+            email=request.data.get("email"),
+            telephone=request.data.get("telephone"),
+            adresse_livraison=request.data.get("adresse_livraison"),
+            statut=request.data.get("statut", "en attente"),
+            sous_total=request.data.get("sous_total"),
+            frais_livraison=request.data.get("frais_livraison"),
+            total=request.data.get("total"),
+            numero_commande=request.data.get("numero_commande"),
+            numero_suivi=request.data.get("numero_suivi"),
+        )
+
+        for ligne in lignes_panier:
+            produit = ligne.id_produit
+            LigneCommande.objects.create(
+                id_commande=commande,
+                id_produit=ligne.id_produit,
+                quantite=ligne.quantite,
+                prix_unitaire=ligne.prix_unitaire,
+                id_vendeur=ligne.id_produit.id_vendeur,
+                sous_total=ligne.quantite * ligne.prix_unitaire,
+            )
+            produit.quantite_stock -= ligne.quantite
+            produit.save()
+        lignes_panier.delete()
+        serializer = self.get_serializer(commande)
+        return Response(serializer.data, status=201)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        old_status = instance.statut
+        new_status = request.data.get("statut", old_status)
+        if old_status != "annulee" and new_status == "annulee":
+            lignes = LigneCommande.objects.filter(id_commande=instance)
+            for ligne in lignes:
+                produit = ligne.id_produit
+                produit.quantite_stock += ligne.quantite
+                produit.save()
+
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data)
+    @action(detail=True, methods=["post"])
+    def cancel(self, request, pk=None):
+        commande = self.get_object()
+
+        if commande.statut == "annulee":
+            return Response({"error": "Déjà annulée"}, status=400)
+
+        lignes = LigneCommande.objects.filter(id_commande=commande)
+
+        for ligne in lignes:
+            produit = ligne.id_produit
+            produit.quantite_stock += ligne.quantite
+            produit.save()
+
+        commande.statut = "annulee"
+        commande.save()
+
+        return Response({"message": "Commande annulée"})
+
+class FavoriViewSet(viewsets.ModelViewSet):
+    serializer_class = FavoriSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Favori.objects.filter(user=self.request.user)
+    @action(detail=False, methods=["POST"])
+    def toggle(self, request):
+        user = request.user
+        produit_id = request.data.get("id_produit")
+
+        if not produit_id:
+            return Response({"error": "Produit manquant"}, status=400)
+
+        favori = Favori.objects.filter(user=user, id_produit_id=produit_id).first()
+
+        if favori:
+            favori.delete()
+            return Response({"message": "Retiré des favoris", "favori": False})
+
+        Favori.objects.create(user=user, id_produit_id=produit_id)
+        return Response({"message": "Ajouté aux favoris", "favori": True})
+
+    @action(detail=False, methods=["GET"])
+    def ids(self, request):
+        ids = Favori.objects.filter(user=request.user).values_list("id_produit_id", flat=True)
+        return Response(list(ids))
+
+class AvisViewSet(viewsets.ModelViewSet):
+    serializer_class = AvisSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Avis.objects.select_related(
+            "id_ligne_commande__id_produit",
+            "id_ligne_commande__id_commande__id_client"
+        )
+
+        produit_id = self.request.query_params.get("produit")
+
+        if produit_id:
+            queryset = queryset.filter(
+                id_ligne_commande__id_produit_id=produit_id
+            )
+
+        return queryset.order_by("-created_at")
+
+    def create(self, request):
+        ligne_id = request.data.get("ligne_commande")
+        note = request.data.get("note")
+        commentaire = request.data.get("commentaire")
+
+        ligne = get_object_or_404(
+            LigneCommande,
+            id=ligne_id,
+            id_commande__id_client=request.user  # 🔥 حماية
+        )
+
+        # ❌ منع duplicate review
+        if Avis.objects.filter(id_ligne_commande=ligne).exists():
+            return Response({"error": "Review already exists"}, status=400)
+
+        avis = Avis.objects.create(
+            id_ligne_commande=ligne,
+            note=note,
+            commentaire=commentaire
+        )
+
+        return Response(AvisSerializer(avis).data, status=201)
+
+    @action(detail=False, methods=["GET"])
+    def stats(self, request):
+        produit_id = request.query_params.get("produit")
+
+        avg = Avis.objects.filter(
+            id_ligne_commande__id_produit_id=produit_id
+        ).aggregate(avg=Avg("note"))
+
+        return Response({
+            "average": avg["avg"] or 0
+        })

@@ -1,12 +1,22 @@
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
-
+from django.core.validators import RegexValidator
 
 # =========================
 # Custom User
 # =========================
 class User(AbstractUser):
+    username = models.CharField(
+        max_length=150,
+        unique=True,
+        validators=[
+            RegexValidator(
+                regex=r"^[\w\s]+$",
+                message="Username can contain letters, numbers and spaces"
+            )
+        ]
+    )
     class TypeUser(models.TextChoices):
         CLIENT = "client", "Client"
         VENDEUR = "vendeur", "Vendeur"
@@ -169,11 +179,12 @@ class LignePanier(models.Model):
 # =========================
 class Commande(models.Model):
     class Statut(models.TextChoices):
-        EN_ATTENTE_PAIEMENT = "en_attente_paiement", "En attente de paiement"
+        EN_ATTENTE = "en_attente", "En attente"
         CONFIRMEE = "confirmee", "Confirmée"
         EN_PREPARATION = "en_preparation", "En préparation"
         EXPEDIEE = "expediee", "Expédiée"
         LIVREE = "livree", "Livrée"
+        COLLECTEE = "collectee", "Collectée"
         ANNULEE = "annulee", "Annulée"
 
     numero_commande = models.CharField(max_length=50, unique=True)
@@ -186,17 +197,11 @@ class Commande(models.Model):
         related_name="commandes_client",
     )
 
-    id_vendeur = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="commandes_vendeur",
-    )
-
     nom = models.CharField(max_length=100, blank=True, null=True)
     email = models.EmailField(max_length=255, blank=True, null=True)
     telephone = models.CharField(max_length=20, blank=True, null=True)
 
-    statut = models.CharField(max_length=30, choices=Statut.choices)
+    statut = models.CharField(max_length=30, choices=Statut.choices, default=Statut.EN_ATTENTE)
     sous_total = models.DecimalField(max_digits=10, decimal_places=2)
     frais_livraison = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=10, decimal_places=2)
@@ -224,6 +229,11 @@ class LigneCommande(models.Model):
         Produit,
         on_delete=models.PROTECT,
         related_name="lignes_commande",
+    )
+    id_vendeur = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="commandes_vendeur",
     )
     quantite = models.IntegerField()
     prix_unitaire = models.DecimalField(max_digits=10, decimal_places=2)

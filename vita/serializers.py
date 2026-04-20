@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User,Produit,Categorie
+from .models import User,Produit,Categorie,LignePanier,Panier,ProfilClient,ProfilVendeur,Commande,LigneCommande,Favori,Avis
 import re
 
 
@@ -50,10 +50,29 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
     remember_me = serializers.BooleanField(default=False)
 
+class ProfilClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfilClient
+        fields = '__all__'
+
+class ProfilVendeurSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfilVendeur
+        fields = '__all__'
+
 class MeSerializer(serializers.ModelSerializer):
+    info = serializers.SerializerMethodField()
     class Meta:
         model = User
-        fields = ["id", "username", "email","nom","prenom","telephone","type_user","date_joined"]
+        fields = ["id", "username", "email","nom","prenom","telephone","type_user","date_joined","info"]
+
+    def get_info(self, obj):
+        if obj.type_user == "client":
+            return ProfilClientSerializer(ProfilClient.objects.get(user=obj)).data
+        else:
+            return ProfilVendeurSerializer(ProfilVendeur.objects.get(user=obj)).data
+
+
 
 # serializer
 class CategorySerializer(serializers.ModelSerializer):
@@ -69,3 +88,91 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Produit
         fields = ["id", "nom", "description", "prix", "quantite_stock", "note_moyenne", "url", "id_categorie", "category_name", "id_vendeur", "seller_name","tag"]
 
+class LignePanierSerializer(serializers.ModelSerializer):
+    produit_nom = serializers.CharField(source="id_produit.nom", read_only=True)
+    produit_url = serializers.CharField(source="id_produit.url", read_only=True)
+    produit_vendeur = serializers.CharField(source="id_produit.id_vendeur", read_only=True)
+    produit_ID = serializers.CharField(source="id_produit.id", read_only=True)
+    produit_stock = serializers.CharField(source="id_produit.quantite_stock", read_only=True)
+    class Meta:
+        model = LignePanier
+        fields = ["id", "quantite", "prix_unitaire","produit_nom","produit_url","produit_vendeur","produit_stock","produit_ID"]
+
+class LignePanierUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LignePanier
+        fields = ["quantite"]
+
+class PanierSerializer(serializers.ModelSerializer):
+    lignes = LignePanierSerializer(many=True, read_only=True)
+    total = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Panier
+        fields = ["id", "created_at", "lignes", "total"]
+
+    def get_total(self, obj):
+        return sum(
+            ligne.quantite * ligne.prix_unitaire
+            for ligne in obj.lignes.all()
+        )
+
+class LigneCommandeSerializer(serializers.ModelSerializer):
+    produit_nom = serializers.CharField(source="id_produit.nom", read_only=True)
+    produit_url = serializers.CharField(source="id_produit.url", read_only=True)
+    produit_vendeur = serializers.CharField(source="id_produit.id_vendeur.username", read_only=True)
+    class Meta:
+        model = LigneCommande
+        fields = ["id","produit_nom", "produit_url", "quantite", "prix_unitaire","sous_total","produit_vendeur"]
+
+class CommandeSerializer(serializers.ModelSerializer):
+    lignes = LigneCommandeSerializer(many=True, read_only=True)
+    class Meta:
+        model = Commande
+        fields = "__all__"
+        read_only_fields = ["user"]
+
+class FavoriSerializer(serializers.ModelSerializer):
+    produit_nom = serializers.CharField(source="id_produit.nom", read_only=True)
+    produit_url = serializers.CharField(source="id_produit.url", read_only=True)
+    produit_prix = serializers.DecimalField(source="id_produit.prix", max_digits=10, decimal_places=2, read_only=True)
+    quantite_stock = serializers.CharField(source="id_produit.quantite_stock", read_only=True)
+    class Meta:
+        model = Favori
+        fields = ["id", "id_produit", "produit_nom", "produit_url", "produit_prix", "quantite_stock", "created_at"]
+
+class AvisSerializer(serializers.ModelSerializer):
+    produit_nom = serializers.CharField(source="id_ligne_commande.id_produit.nom", read_only=True)
+    user = serializers.CharField(source="id_ligne_commande.id_commande.id_client.username", read_only=True)
+
+    class Meta:
+        model = Avis
+        fields = ["id", "note", "commentaire", "produit_nom", "user", "created_at"]
+
+class MeUpdateSerializer(serializers.ModelSerializer):
+    adresse_livraison = serializers.CharField(source="profil_client.adresse_livraison", required=False)
+
+    class Meta:
+        model = User
+        fields = ["nom", "prenom", "telephone", "email", "adresse_livraison"]
+
+    def update(self, instance, validated_data):
+        profil_data = validated_data.pop("profil_client", None)
+
+        # update user
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # update profile
+        if profil_data:
+            profil = instance.profil_client
+            profil.adresse_livraison = profil_data.get("adresse_livraison", profil.adresse_livraison)
+            profil.save()
+
+        return instance
+
+class ProfilClientUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfilClient
+        fields = ["adresse_livraison"]
