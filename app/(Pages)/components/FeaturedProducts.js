@@ -3,7 +3,35 @@ import { useClientStore } from "@/app/Store/useClientStore";
 import Link from "next/link";
 import { useEffect, useState } from "react"
 
-function ProductCard({ category_name, url, seller_name, nom, prix, quantite_stock, note_moyenne, tag }) {
+function ProductCard({ id, category_name, url, seller_name, nom, prix, quantite_stock, note_moyenne, tag }) {
+  const { increment, cart, syncCart } = useClientStore();
+  const addToCart = async (productId) => {
+    try {
+      const res = await fetch("http://localhost:8000/panier/add_product/", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ produit: productId, quantite: 1 }),
+      });
+
+      if (!res.ok) {
+        alert("Erreur ajout panier");
+        return;
+      }
+
+      await syncCart();
+
+      alert("Produit ajouté au panier 🛒");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const getCartQuantity = (productId) => {
+    const item = cart?.lignes?.find((l) => l.produit_ID == productId);
+    return item ? item.quantite : 0;
+  }
+  const cartQty = getCartQuantity(id);
+  const isMaxed = cartQty >= quantite_stock;
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100 dark:border-slate-700 group">
       <div className="relative aspect-square overflow-hidden">
@@ -48,12 +76,18 @@ function ProductCard({ category_name, url, seller_name, nom, prix, quantite_stoc
             {parseFloat(prix).toLocaleString("fr-DZ")} <span className="text-sm font-normal text-slate-400">دج</span>
           </span>
           <button
-            disabled={quantite_stock === 0}
+            onClick={() => addToCart(id)}
+            disabled={quantite_stock === 0 || isMaxed}
             className="w-10 h-10 bg-primary/10 hover:bg-primary text-primary hover:text-slate-900 rounded-full flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <span className="material-symbols-outlined">add_shopping_cart</span>
           </button>
         </div>
+        {isMaxed && quantite_stock > 0 && (
+          <p className="text-[10px] text-red-500 mt-1 font-semibold">
+            Quantité maximale atteinte dans le panier
+          </p>
+        )}
       </div>
     </div>
   )
@@ -68,6 +102,7 @@ export default function FeaturedProducts() {
     setFeaturedProducts(shuffled.slice(0, 4));
   }, [products]);
   console.log("products", products)
+
   return (
     <section className="mb-16">
       <div className="flex items-end justify-between mb-8">

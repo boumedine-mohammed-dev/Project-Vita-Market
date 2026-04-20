@@ -6,14 +6,8 @@ import FeaturedProducts from "./(Pages)/components/FeaturedProducts";
 import NewArrivalsAndPromo from "./(Pages)/components/NewArrivals";
 import LocalSpecialties from "./(Pages)/components/LocalSpecialties";
 import Footer from "./(Pages)/components/Footer";
-import { useAuthStore } from "./Store/useAuthStore";
-import { useEffect } from "react";
 
 export default function Home() {
-  const { checkAuth } = useAuthStore();
-  useEffect(() => {
-    checkAuth();
-  }, []);
   return (
     <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen">
       {/* Sticky Navigation Bar */}

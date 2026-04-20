@@ -1,8 +1,44 @@
 'use client'
 import { useClientStore } from "@/app/Store/useClientStore";
+import Link from "next/link";
 import { useEffect } from "react";
 
-function ArrivalCard({ url, nom, prix }) {
+function ArrivalCard({ id, url, nom, prix, quantite_stock }) {
+  const { syncCart, cart } = useClientStore();
+  const addToCart = async (productId) => {
+    try {
+      const res = await fetch("http://localhost:8000/panier/add_product/", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          produit: productId,
+          quantite: 1,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error(data);
+        alert("Erreur ajout panier");
+        return;
+      }
+      await syncCart();
+      alert("Produit ajouté au panier 🛒");
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const getCartQuantity = (productId) => {
+    const item = cart?.lignes?.find((l) => l.produit_ID == productId);
+    return item ? item.quantite : 0;
+  }
+  const cartQty = getCartQuantity(id);
+  const isMaxed = cartQty >= quantite_stock;
   return (
     <div className="flex items-center gap-4 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow">
       <div
@@ -12,10 +48,15 @@ function ArrivalCard({ url, nom, prix }) {
       <div>
         <h4 className="font-bold leading-tight">{nom}</h4>
         <p className="text-primary font-black mt-1">{prix}</p>
-        <button className="mt-2 text-xs font-bold text-slate-400 hover:text-primary transition-colors flex items-center gap-1 uppercase">
+        <button disabled={isMaxed || quantite_stock === 0} onClick={() => addToCart(id)} className="disabled:opacity-50 disabled:cursor-not-allowed mt-2 text-xs font-bold text-slate-400 hover:text-primary transition-colors flex items-center gap-1 uppercase">
           Quick Add <span className="material-symbols-outlined text-xs">add</span>
         </button>
       </div>
+      {isMaxed && quantite_stock > 0 && (
+        <p className="text-[10px] text-red-500 mt-1 font-semibold">
+          Quantité maximale atteinte dans le panier
+        </p>
+      )}
     </div>
   )
 }
@@ -32,12 +73,12 @@ export default function NewArrivalsAndPromo() {
       <div className="lg:col-span-2">
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-3xl font-bold">Nouveautés</h2>
-          <a className="text-sm font-bold text-slate-400 hover:text-primary transition-colors uppercase tracking-widest" href="#">
+          <Link className="text-sm font-bold text-slate-400 hover:text-primary transition-colors uppercase tracking-widest" href="/products?tag=Nouveautés">
             Découvrez les nouveaux articles
-          </a>
+          </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {products.filter((item) => item.tag === "NEW_ARRIVAL").slice(0, 6).map((item, index) => (
+          {products.filter((item) => item.tag === "NOUVEAUTES").slice(0, 6).map((item, index) => (
             <ArrivalCard key={index} {...item} />
           ))}
         </div>

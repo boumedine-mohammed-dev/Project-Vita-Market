@@ -6,6 +6,7 @@ export const useAuthStore = create((set) => ({
     loading: true,
     message: "",
     error: "",
+    setUser: (user) => set({ user }),
     checkAuth: async () => {
         try {
             const res = await fetch("http://localhost:8000/auth/me/", {
@@ -38,21 +39,29 @@ export const useAuthStore = create((set) => ({
         const data = await res.json();
         console.log(data);
         set({ user: data.user, message: data.message, error: data.error });
+        return data;
     },
     register: async (formData) => {
-        const res = await fetch("http://localhost:8000/register/", {
-            method: "POST",
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData),
-        });
-        const data = await res.json();
-        set({ user: data.user, message: data.message, error: data.error });
+        try {
+            const res = await fetch("http://localhost:8000/register/", {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            });
+            const data = await res.json();
+            console.log(data);
+
+            set({ user: data.user, message: data.message });
+            return data;
+        } catch (error) {
+            set({ error: error.message });
+        }
     },
     logout: async () => {
-        await fetch("http://localhost:8000/logout/", {
+        await fetch("http://localhost:8000/auth/me/logout/", {
             method: "POST",
             credentials: "include",
         });

@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuthStore } from "@/app/Store/useAuthStore";
+import { useClientStore } from "@/app/Store/useClientStore";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 
@@ -20,14 +21,26 @@ const getCategoryIcon = (nom = "") => {
 };
 
 export default function Navbar() {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
+  const { count, fetchCart, searchTerm, setSearchTerm } = useClientStore();
   const [allCategories, setAllCategories] = useState([]);
   const [categoryTree, setCategoryTree] = useState([]);
   const [hoveredParent, setHoveredParent] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const closeTimer = useRef(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileTimer = useRef(null);
+  const openProfile = () => {
+    clearTimeout(profileTimer.current);
+    setProfileOpen(true);
+  };
 
+  const closeProfile = () => {
+    profileTimer.current = setTimeout(() => {
+      setProfileOpen(false);
+    }, 150);
+  };
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -46,6 +59,7 @@ export default function Navbar() {
       }
     };
     fetchCategories();
+    fetchCart();
   }, []);
 
   const openMenu = () => {
@@ -77,6 +91,8 @@ export default function Navbar() {
                 className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-full focus:ring-2 focus:ring-primary text-sm"
                 placeholder="Rechercher des produits biologiques…"
                 type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </div>
@@ -207,22 +223,53 @@ export default function Navbar() {
               <button className="cursor-pointer flex size-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-[#81e240]/20 hover:text-[#81e240] transition-all">
                 <span className="material-symbols-outlined text-[20px]">favorite</span>
               </button>
-              <button className="cursor-pointer flex size-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-[#81e240]/20 hover:text-[#81e240] transition-all relative">
-                <span className="material-symbols-outlined text-[20px]">shopping_cart</span>
-                <span className="absolute top-0.5 right-0.5 bg-primary text-[10px] font-bold px-1.5 rounded-full border-2 border-white dark:border-background-dark"> 3 </span>
-              </button>
+              <Link href="/cart">
+                <button className="flex items-center justify-center rounded-lg h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 relative">
+                  <span className="material-symbols-outlined text-xl">shopping_cart</span>
+                  <span className="absolute -top-1 -right-1 bg-[#81e240] text-slate-900 text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">{count}</span>
+                </button>
+              </Link>
             </div>
-            <Link href={user ? "/profile" : "/login"}>
+            <div
+              className="relative"
+              onMouseEnter={openProfile}
+              onMouseLeave={closeProfile}
+            >
               {user ? (
-                <button className="cursor-pointer flex size-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-[#81e240]/20 hover:text-[#81e240] transition-all">
-                  <span className="material-symbols-outlined text-slate-700 dark:text-slate-300">person</span>
-                </button>
+                <>
+                  {/* Profile Button */}
+                  <button className="cursor-pointer flex size-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-[#81e240]/20 hover:text-[#81e240] transition-all">
+                    <span className="material-symbols-outlined">person</span>
+                  </button>
+
+                  {/* 🔥 Dropdown */}
+                  {profileOpen && (
+                    <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-[#182111] border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg overflow-hidden z-50">
+
+                      <Link
+                        href="/profile"
+                        className="block px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800"
+                      >
+                        Mon profil
+                      </Link>
+
+                      <button
+                        onClick={logout}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
+                      >
+                        Déconnexion
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
-                <button className="cursor-pointer hidden sm:block px-5 py-2 text-sm font-bold bg-primary text-slate-900 rounded-full hover:bg-primary/90 transition-all shadow-sm">
-                  Se connecter
-                </button>
+                <Link href="/login">
+                  <button className="hidden sm:block px-5 py-2 text-sm font-bold bg-primary text-slate-900 rounded-full hover:bg-primary/90 transition-all shadow-sm">
+                    Se connecter
+                  </button>
+                </Link>
               )}
-            </Link>
+            </div>
             <button className="md:hidden p-2">
               <span className="material-symbols-outlined">menu</span>
             </button>

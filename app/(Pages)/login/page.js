@@ -10,7 +10,7 @@ export default function AuthPage() {
     const [activeTab, setActiveTab] = useState('login')
     const [terms, setTerms] = useState(false)
     const router = useRouter();
-    const { login, register, message, error } = useAuthStore();
+    const { login, register, message, error, user } = useAuthStore();
     const [formDataRegister, setFormDataRegister] = useState({
         username: "",
         email: "",
@@ -29,17 +29,31 @@ export default function AuthPage() {
         e.preventDefault();
         const data = await register(formDataRegister);
         console.log(data);
+        if (!data?.user) {
+            console.log("Register failed or no user returned");
+            return;
+        }
+
+        const type = data.user.type_user;
         setTimeout(() => {
-            router.push(data?.user?.type_user == "vendeur" ? "/dashboard" : "/");
+            router.push(type === "vendeur" ? "/dashboard" : "/");
         }, 2000);
     }
     const handleLogin = async (e) => {
         e.preventDefault();
         const data = await login(formDataLogin);
         console.log(data);
+
+        if (!data?.user) {
+            console.log("Login failed or no user returned");
+            return;
+        }
+
+        const type = data.user.type_user;
         setTimeout(() => {
-            router.push(data?.user?.type_user == "vendeur" ? "/dashboard" : "/");
+            router.push(type === "vendeur" ? "/dashboard" : "/");
         }, 2000);
+
     }
     console.log(formDataRegister)
     const textImage = () => {

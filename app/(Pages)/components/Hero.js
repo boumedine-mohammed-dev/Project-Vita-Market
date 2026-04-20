@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Hero() {
   return (
     <section className="relative rounded-3xl overflow-hidden bg-slate-200 dark:bg-slate-800 h-[500px] mb-12">
@@ -19,9 +21,11 @@ export default function Hero() {
           Achetez auprès de plus de 200 agriculteurs biologiques locaux qui livrent des produits frais de saison directement à votre porte.
         </p>
         <div className="flex gap-4">
-          <button className="px-8 py-4 bg-primary text-slate-900 font-bold rounded-xl hover:scale-105 transition-transform">
-            Commencer vos achats
-          </button>
+          <Link href="/products">
+            <button className="cursor-pointer px-8 py-4 bg-primary text-slate-900 font-bold rounded-xl hover:scale-105 transition-transform">
+              Commencer vos achats
+            </button>
+          </Link>
         </div>
       </div>
     </section>

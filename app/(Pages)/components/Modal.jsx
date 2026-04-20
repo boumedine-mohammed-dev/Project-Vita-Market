@@ -1,10 +1,10 @@
-import { useAuth } from "@/app/context/AuthContext";
+import { useAuthStore } from "@/app/Store/useAuthStore";
 import { useEffect, useState } from "react";
 
 
 
 export default function Modal({ showModal, setShowModal }) {
-    const { user } = useAuth()
+    const { user } = useAuthStore()
     const [formData, setFormData] = useState({
         name: "",
         description: "",

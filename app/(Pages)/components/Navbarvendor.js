@@ -2,18 +2,19 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
+import { useAuthStore } from "@/app/Store/useAuthStore";
 
 export default function Navbarvendor() {
+    const { user } = useAuthStore();
     const pathname = usePathname();
     const [active, setActive] = useState(pathname);
     const link = [
         { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
         { href: "/vendor-products", label: "My Products", icon: "package_2" },
-        { href: "/inventory", label: "Manage Inventory", icon: "inventory_2" },
-        { href: "/analytics", label: "Analytics", icon: "analytics" },
+        { href: "/orders", label: "Orders", icon: "shopping_cart" },
         { href: "/settings", label: "Store Settings", icon: "settings" },
     ];
-    console.log(link);
+    console.log(user);
     return (
         <aside className="font-display w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark flex flex-col justify-between p-4">
             <div className="flex flex-col gap-8">

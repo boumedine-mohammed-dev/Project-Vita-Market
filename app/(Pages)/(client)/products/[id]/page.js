@@ -1,50 +1,18 @@
 "use client"
-import Head from 'next/head'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
+import { useClientStore } from "@/app/Store/useClientStore"
 
-const thumbnails = [
-    {
-        url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAfrgIYbThej4hs32K18Ughw6C0iCh9NcubgiEptdtNqEapUXmB7PVOECoSkc7ah-jhnUfFts4H3R_CDXejFZCn2ixjryHH7NN-wm5aSU_V1jXdoV_ds_mZ4QE6A32Onx2MjPvb1Eq7Skr1lLTAvQInTaVmP4adD6WOQ2B_PAX1Xp07CDTtoOTnBLgjjxEhO0LWzosr8a_s3o8vDtd8YdLpsUBp15vZSJ4Z1AOYGzQQpIx-PA53slsWxo6lrJFC9aTEq6kMONHwl59U',
-        alt: 'Fresh red honeycrisp apples in a basket',
-    },
-    {
-        url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC6LT2kXGFN3xIV-LpxT860IgS22pcvASSZZrFvAqFERdlkYkjDtlaX6UCh_Icsx0t3fhqj4Ejhw2W3aZz8pSqnFkeErTZHiRJZ2xXDsvXwg7vudGjUOllraL70BzG4ibYbTHK_jHm1whmtqr-mtjXBR69zxvrYTn1-jG6jJSbOQ3t_aG66Y1NyIk0TEjN7up9R0G4SPQQaTswmboXQDfoR7UiG1Js_gO1t4kZkdsiRtv57oOF7B_Y-ueOlbCo1HqWSWIGaRIbM4zXA',
-    },
-    {
-        url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA4xYbMrvjTyAQvkI_vcMd5iVJtJcIl-yb-Lv0vanDiu1XOpYSvd0UanZgbqDb0wcxP--OJRnJJNAfp7ds6HW2w_WO1X1afaVMvqjSH4-HlkzN4qlgzsZujpt9WUK2Q36LtJsdhVloOAakfbUP-jUsT9taCkjUwwMPbkstsO00hhZFwzIo6mpFspHF07Whb5i222HaX5fUhTo8Oe_h0cDmBaukQRfc-UZ7OhZR25fRVlrr9Xs16itl2L-F7rFNnxqM7-2O87HLdjwDB',
-    },
-    {
-        url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCXNDfHKaLy5uC1ybbDZHYbO5G_IDzqyquRkLzRfGH2a6h4-4jHdW1qTnl0mL7ELeFnaD42n4cn-4kbVE5FbBYmkujKhkpg0gYc3k7mmRFqmx2sFsIoqDdh9HWNVq3PKCQABcppOWUYe_EzG9anBcrpZEG8nsNbeBowowlS61SdwuRvqqpO07tWzNSO8S0eN-nCVe8fb9Y06KoLGE1HlOeSIhb1Jb8kRUbcgstIiDY5IT6iWgGYoyfB9aUQ8u10bM8EsM8G_cpM0jvm',
-    },
-    {
-        url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBspObewuOBG0hytEdYNH6yre7EiW2SmXyX_8Xa1J55jDqDipggpGAIJz5BESdUstwKdjazgU60kFcP9rU41xHwSKRP4xiu49WtVXyiUc54j5FIWD30O8IGyhjxGl6s7uKzk-MiosfB5GeF8OxCCDIHba1UKz5POq7jWVR5UefvFdiGflmJmr6t39Pbfiv-3Ew20FOxE3i4Z--cJIzsDCrUqQBCHnX-yEuX5iG5mVzUQXAiqpAqd9tut-ss3lW_QZHiriUjoRMlSpIA',
-    },
-]
-
-const tabs = ['Description', 'Nutritional Facts', 'Vendor Story', 'Reviews (124)']
-
-const reviews = [
-    {
-        name: 'Sarah Jenkins',
-        time: '2 days ago',
-        stars: 5,
-        text: "Best apples I've ever had delivered! They were crisp, perfectly sweet, and arrived without a single bruise. You can really taste the difference between these and store-bought organic ones.",
-        avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBzRJFPwDd0yTn9NwuLKULPdZKXC6ORETnepLzILjArlHR6no5OyAl15N2qIwnAg8dn91wRNGvY5vLrl6UoSweOMLA8OE5Iq6u70Mxv6_FjBLHAVCSfPgzzwZsNKyWFvGmjHNXGtKtdlumyEgjWXXQGucAA56iIh9WJX4NnBmBMJrDqlrPE4hTnIlOo9yoEcWb9iSyw27wrQtE9U8pQu4gK5LhptBSVAR5ifdZUXAB37a9JRXuYkVZ5cPrEyCh8K_nodffO42TD0VRS',
-    },
-    {
-        name: 'Mark Thompson',
-        time: '1 week ago',
-        stars: 4,
-        text: 'Fast shipping and very fresh. One was slightly smaller than the rest, but the quality overall is incredible. Definitely subscribing to these weekly.',
-        avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCcUoxsEyfRrlA2dTZtWis8orG-RTtpwwzEOOTG2opGzWrOz9qVX46dycQRNqCUZHn5Ev5yH5vnYCnuMQQMaVTyqsFsNIyjFltYUWjulh7Gw1y4ICEh1JaRwDvPyHlWTjfeLztBZdIorj3iRcIXtiUoFaMlhRFCoSIGUngq93XxqAp1VZc2ly7zTNuBUHBUNmsEJj9uwhNMRWU04ekUZ3THh9LvFAnLSmhLQMv-jXs0v5_aBu61rT3bgrncm7R930vEBZXqu7Ue0WTH',
-    },
-]
-
-function Stars({ count, total = 5, size = 'text-yellow-400' }) {
+function Stars({ count, total = 5, size = "text-sm" }) {
+    const rating = parseFloat(count) || 0;
     return (
         <div className="flex">
             {Array.from({ length: total }).map((_, i) => (
-                <span key={i} className={`material-symbols-outlined ${size}`} style={{ fontVariationSettings: i < count ? "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" : "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>
+                <span
+                    key={i}
+                    className={`material-symbols-outlined ${size} ${i < Math.floor(rating) ? "text-amber-400" : "text-slate-300"}`}
+                    style={{ fontVariationSettings: i < Math.floor(rating) ? "'FILL' 1" : "'FILL' 0" }}
+                >
                     star
                 </span>
             ))}
@@ -53,309 +21,563 @@ function Stars({ count, total = 5, size = 'text-yellow-400' }) {
 }
 
 export default function ProductDetailsPage() {
+    const { id } = useParams()
+    const { syncCart, cart } = useClientStore()
+    const [product, setProduct] = useState(null)
+    const [reviews, setReviews] = useState([])
+    const [loading, setLoading] = useState(true)
     const [activeThumb, setActiveThumb] = useState(0)
     const [activeTab, setActiveTab] = useState(0)
     const [qty, setQty] = useState(1)
+    const [isFavori, setIsFavori] = useState(false)
+    const [favoriLoading, setFavoriLoading] = useState(false)
+    const [addingToCart, setAddingToCart] = useState(false)
+    const [cartSuccess, setCartSuccess] = useState(false)
 
+    useEffect(() => {
+        if (!id) return;
+        const fetchProduct = async () => {
+            try {
+                setLoading(true);
+                const res = await fetch(`http://localhost:8000/products/${id}/`);
+                const data = await res.json();
+                setProduct(data);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        const fetchReviews = async () => {
+            try {
+                const res = await fetch(`http://localhost:8000/reviews/?produit=${id}`, {
+                    credentials: "include",
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setReviews(Array.isArray(data) ? data : data.results ?? []);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        const fetchFavoriStatus = async () => {
+            try {
+                const res = await fetch(`http://localhost:8000/favoris/ids/`, {
+                    credentials: "include",
+                });
+                if (res.ok) {
+                    const ids = await res.json();
+                    setIsFavori(ids.includes(parseInt(id)));
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        fetchProduct();
+        fetchReviews();
+        fetchFavoriStatus();
+    }, [id]);
+
+    const toggleFavori = async () => {
+        if (favoriLoading) return;
+        setFavoriLoading(true);
+        setIsFavori((prev) => !prev); // optimistic
+        try {
+            const res = await fetch("http://localhost:8000/favoris/toggle/", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id_produit: parseInt(id) }),
+            });
+            if (!res.ok) throw new Error();
+        } catch {
+            setIsFavori((prev) => !prev); // revert
+        } finally {
+            setFavoriLoading(false);
+        }
+    };
+
+    const addToCart = async () => {
+        if (addingToCart) return;
+        setAddingToCart(true);
+        try {
+            const res = await fetch("http://localhost:8000/panier/add_product/", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ produit: parseInt(id), quantite: qty }),
+            });
+            if (!res.ok) throw new Error();
+            await syncCart();
+            setCartSuccess(true);
+            setTimeout(() => setCartSuccess(false), 3000);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setAddingToCart(false);
+        }
+    };
+
+    // Loading skeleton
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#f7f8f6] dark:bg-[#182111] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4 text-slate-400">
+                    <span className="material-symbols-outlined text-5xl animate-spin">progress_activity</span>
+                    <p className="text-sm font-medium">Chargement du produit...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!product) {
+        return (
+            <div className="min-h-screen bg-[#f7f8f6] dark:bg-[#182111] flex flex-col items-center justify-center gap-4 text-slate-400">
+                <span className="material-symbols-outlined text-5xl">search_off</span>
+                <p className="text-lg font-medium">Produit introuvable.</p>
+                <a href="/products" className="text-primary font-bold hover:underline text-sm">← Retour aux produits</a>
+            </div>
+        );
+    }
+
+    // Build image gallery: primary url + any extras
+    const images = [
+        product.url,
+        ...(product.images ?? []),
+    ].filter(Boolean);
+    if (images.length === 0) images.push("https://via.placeholder.com/600x400?text=No+Image");
+
+    const rating = parseFloat(product.note_moyenne || 0);
+    const inStock = product.quantite_stock > 0;
+    const lowStock = product.quantite_stock <= 5 && product.quantite_stock > 0;
+
+    const tabs = [
+        "Description",
+        `Avis (${reviews.length})`,
+    ];
+    const getCartQuantity = (productId) => {
+        const item = cart?.lignes?.find((l) => l.produit_ID == productId);
+        return item ? item.quantite : 0;
+    }
+    const cartQty = getCartQuantity(id);
+    const isMaxed = cartQty >= product.quantite_stock;
     return (
-        <>
-            <Head>
-                <title>Organic Honeycrisp Apples - EcoMarket</title>
-            </Head>
+        <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[#f7f8f6] dark:bg-[#182111] font-display text-slate-900 dark:text-slate-100">
+            <main className="flex-1 px-4 md:px-10 lg:px-20 xl:px-40 py-8">
 
-            <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[#f7f8f6] dark:bg-[#182111] font-display text-slate-900 dark:text-slate-100">
+                {/* Breadcrumbs */}
+                <nav className="flex flex-wrap gap-2 pb-6 text-sm">
+                    <a className="text-slate-500 hover:text-primary transition-colors" href="/">Accueil</a>
+                    <span className="text-slate-400">/</span>
+                    <a className="text-slate-500 hover:text-primary transition-colors" href="/products">Produits</a>
+                    {product.category_name && (
+                        <>
+                            <span className="text-slate-400">/</span>
+                            <a
+                                className="text-slate-500 hover:text-primary transition-colors"
+                                href={`/products?category=${encodeURIComponent(product.category_name)}`}
+                            >
+                                {product.category_name}
+                            </a>
+                        </>
+                    )}
+                    <span className="text-slate-400">/</span>
+                    <span className="text-slate-900 dark:text-slate-100 font-semibold line-clamp-1">{product.nom}</span>
+                </nav>
 
-                {/* Header */}
-                <header className="flex items-center justify-between whitespace-nowrap border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 md:px-20 lg:px-40 py-3 sticky top-0 z-50">
-                    <div className="flex items-center gap-8">
-                        <div className="flex items-center gap-4">
-                            <div className="size-6 text-[#81e240] flex items-center justify-center">
-                                <span className="material-symbols-outlined text-3xl">eco</span>
-                            </div>
-                            <h2 className="text-lg font-bold leading-tight tracking-tight">EcoMarket</h2>
-                        </div>
-                        <label className="hidden md:flex flex-col min-w-40 h-10 max-w-64">
-                            <div className="flex w-full flex-1 items-stretch rounded-lg h-full bg-slate-100 dark:bg-slate-800">
-                                <div className="text-slate-500 flex items-center justify-center pl-4">
-                                    <span className="material-symbols-outlined">search</span>
+                {/* Product Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+
+                    {/* ── Gallery ── */}
+                    <div className="lg:col-span-7 flex flex-col gap-4">
+                        {/* Main image */}
+                        <div className="w-full bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm aspect-[4/3] border border-slate-200 dark:border-slate-800 relative">
+                            <img
+                                src={images[activeThumb]}
+                                alt={product.nom}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { e.target.src = "https://via.placeholder.com/600x400?text=No+Image"; }}
+                            />
+                            {/* Stock badge on image */}
+                            {!inStock && (
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                    <span className="bg-red-500 text-white font-bold px-4 py-2 rounded-xl text-sm">Rupture de stock</span>
                                 </div>
-                                <input className="form-input flex w-full min-w-0 flex-1 border-none bg-transparent focus:ring-0 h-full placeholder:text-slate-500 px-4 text-base" placeholder="Search products..." />
-                            </div>
-                        </label>
-                    </div>
-                    <div className="flex flex-1 justify-end gap-6 items-center">
-                        <nav className="hidden lg:flex items-center gap-6">
-                            <a className="text-slate-700 dark:text-slate-300 text-sm font-medium hover:text-[#81e240] transition-colors" href="#">Shop</a>
-                            <a className="text-slate-700 dark:text-slate-300 text-sm font-medium hover:text-[#81e240] transition-colors" href="#">Vendors</a>
-                            <a className="text-slate-700 dark:text-slate-300 text-sm font-medium hover:text-[#81e240] transition-colors" href="#">Organic Guide</a>
-                        </nav>
-                        <div className="flex gap-2">
-                            <button className="flex items-center justify-center rounded-lg h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                                <span className="material-symbols-outlined text-xl">favorite</span>
-                            </button>
-                            <button className="flex items-center justify-center rounded-lg h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 relative">
-                                <span className="material-symbols-outlined text-xl">shopping_cart</span>
-                                <span className="absolute -top-1 -right-1 bg-[#81e240] text-slate-900 text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">2</span>
-                            </button>
-                            <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-10 w-10 border border-slate-200 dark:border-slate-700" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBxfiZ3H8lZ13xAxmC8RZeM8o41ifGZGfINMNIKKKPEJzTNK3h8fKQXFJUFUnfz1l4ZtFV61pQyu0QIzOzyN2u4N4BYLhD_YvQ6_8N7xjEaKC-wK3MAdH6gjvCqplnwzfNvFjz3hVSLsccfIrg5hui3ga5v47DizRZDyEOrn_pee5Ll126wjqc6HKv4G_t_CZTi5jbzvBAj_mM6ciuutUjWzn--zSNL_TQvceQMId1csO91Z8QcHuvwLun2k5TH8CAb5fu5TyelYGco")' }} />
+                            )}
+                            {lowStock && (
+                                <div className="absolute top-4 left-4 bg-amber-400 text-slate-900 text-[10px] font-bold px-2 py-1 rounded shadow-sm">
+                                    Plus que {product.quantite_stock} !
+                                </div>
+                            )}
                         </div>
-                    </div>
-                </header>
 
-                <main className="flex-1 px-4 md:px-20 lg:px-40 py-8">
-                    {/* Breadcrumbs */}
-                    <nav className="flex flex-wrap gap-2 pb-6 text-sm">
-                        <a className="text-slate-500 hover:text-[#81e240] transition-colors" href="#">Home</a>
-                        <span className="text-slate-400">/</span>
-                        <a className="text-slate-500 hover:text-[#81e240] transition-colors" href="#">Organic Produce</a>
-                        <span className="text-slate-400">/</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-semibold">Fresh Honeycrisp Apples</span>
-                    </nav>
-
-                    {/* Product Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-                        {/* Gallery */}
-                        <div className="lg:col-span-7 flex flex-col gap-4">
-                            <div className="w-full bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm aspect-[4/3] border border-slate-200 dark:border-slate-800">
-                                <div className="w-full h-full bg-center bg-no-repeat bg-cover" style={{ backgroundImage: `url('${thumbnails[activeThumb].url}')` }} />
-                            </div>
-                            <div className="grid grid-cols-4 gap-4">
-                                {thumbnails.slice(0, 4).map((t, i) => (
+                        {/* Thumbnails */}
+                        {images.length > 1 && (
+                            <div className="grid grid-cols-4 gap-3">
+                                {images.slice(0, 4).map((url, i) => (
                                     <div
                                         key={i}
                                         onClick={() => setActiveThumb(i)}
-                                        className={`aspect-square rounded-lg overflow-hidden cursor-pointer border-2 ${activeThumb === i ? 'border-[#81e240]' : 'border-slate-200 dark:border-slate-800 hover:border-[#81e240]'} transition-colors`}
+                                        className={`aspect-square rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${activeThumb === i
+                                            ? "border-primary shadow-md shadow-primary/20"
+                                            : "border-slate-200 dark:border-slate-800 hover:border-primary/50"
+                                            }`}
                                     >
-                                        <div className="w-full h-full bg-center bg-cover" style={{ backgroundImage: `url('${t.url}')` }} />
+                                        <img
+                                            src={url}
+                                            alt={`${product.nom} ${i + 1}`}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => { e.target.src = "https://via.placeholder.com/150?text=?"; }}
+                                        />
                                     </div>
                                 ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ── Product Details ── */}
+                    <div className="lg:col-span-5 flex flex-col gap-6">
+
+                        {/* Status + Title + Rating */}
+                        <div>
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${inStock ? "bg-primary/20 text-primary" : "bg-red-100 dark:bg-red-950/30 text-red-500"}`}>
+                                    {inStock ? "En stock" : "Rupture de stock"}
+                                </span>
+                                {product.category_name && (
+                                    <span className="inline-block px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs font-semibold">
+                                        {product.category_name}
+                                    </span>
+                                )}
+                            </div>
+                            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white leading-tight mb-3">
+                                {product.nom}
+                            </h1>
+                            <div className="flex items-center gap-3 mb-4">
+                                <Stars count={rating} total={5} size="text-base" />
+                                <span className="text-slate-500 text-sm font-medium">
+                                    {rating.toFixed(1)} ({reviews.length} avis)
+                                </span>
+                            </div>
+                            <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                                {parseFloat(product.prix).toLocaleString("fr-DZ")}
+                                <span className="text-lg font-normal text-slate-500 ml-1">دج</span>
+                            </p>
+                        </div>
+
+                        {/* Vendor card */}
+                        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                    <span className="material-symbols-outlined text-primary text-xl">storefront</span>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Vendu par</p>
+                                    <p className="font-bold text-slate-900 dark:text-white">{product.seller_name || "Vendeur local"}</p>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Details */}
-                        <div className="lg:col-span-5 flex flex-col gap-6">
-                            <div>
-                                <span className="inline-block px-2 py-1 rounded bg-[#81e240]/20 text-[#81e240] text-xs font-bold uppercase tracking-wider mb-2">In Stock</span>
-                                <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white leading-tight mb-2">Organic Honeycrisp Apples</h1>
-                                <div className="flex items-center gap-4 mb-4">
-                                    <Stars count={4} total={5} />
-                                    <span className="material-symbols-outlined text-yellow-400" style={{ fontVariationSettings: "'FILL' 0.5, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>star_half</span>
-                                    <span className="text-slate-500 text-sm font-medium">4.8 (124 reviews)</span>
-                                </div>
-                                <p className="text-3xl font-bold text-slate-900 dark:text-white">$4.99 <span className="text-lg font-normal text-slate-500">/ lb</span></p>
-                            </div>
+                        {/* Short description */}
+                        {product.description && (
+                            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed line-clamp-3">
+                                {product.description}
+                            </p>
+                        )}
 
-                            {/* Badges */}
-                            <div className="flex flex-wrap gap-2">
-                                {[
-                                    { icon: 'verified', label: 'USDA Organic' },
-                                    { icon: 'nature', label: 'Non-GMO' },
-                                    { icon: 'location_on', label: 'Local (12 mi)' },
-                                ].map(({ icon, label }) => (
-                                    <div key={label} className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                                        <span className="material-symbols-outlined text-[#81e240] text-lg">{icon}</span>
-                                        <span className="text-xs font-semibold">{label}</span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Vendor */}
-                            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-full bg-cover bg-center" style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDkw1CoCbGNKw7fFET6QybPd-cxxxB2EUhN7VF6ieoHKxNi3ZZrtq4aWI4CXCFc9DGhUiaS3cdtOah7tLPn-pbts6h1t29xAG6Yx7clD6_oxSp6Sj_hLiP68BDOdQc97x3ZL-epPrDsPS9r89i9KsTgBeGD1Y3G20gujnDG27PM2SyxqtG7jzNHAuMz8lZ8sxqzyvTx_Ueu3IWoo8ENEsVoVsTDtF0wvis6YIHci_VlRKG2jlP4pVaK9Z8vb7v9MehVdPlIpYP-DyQF")' }} />
-                                    <div>
-                                        <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Sold by</p>
-                                        <p className="font-bold text-slate-900 dark:text-white">Willow Creek Farms</p>
-                                    </div>
-                                </div>
-                                <a className="text-[#81e240] text-sm font-bold flex items-center gap-1 hover:underline" href="#">
-                                    Visit Store <span className="material-symbols-outlined text-sm">arrow_forward_ios</span>
-                                </a>
-                            </div>
-
-                            {/* Add to cart */}
-                            <div className="flex flex-col gap-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="flex items-center border border-slate-200 dark:border-slate-800 rounded-lg h-12 bg-white dark:bg-slate-900">
-                                        <button onClick={() => setQty(Math.max(1, qty - 1))} className="px-4 text-slate-500 hover:text-[#81e240]">
-                                            <span className="material-symbols-outlined">remove</span>
-                                        </button>
-                                        <input className="w-12 text-center border-none bg-transparent focus:ring-0 font-bold" type="number" value={qty} readOnly />
-                                        <button onClick={() => setQty(qty + 1)} className="px-4 text-slate-500 hover:text-[#81e240]">
-                                            <span className="material-symbols-outlined">add</span>
-                                        </button>
-                                    </div>
-                                    <button className="flex-1 h-12 bg-[#81e240] text-slate-900 font-bold rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
-                                        <span className="material-symbols-outlined">shopping_basket</span>
-                                        Add to Cart
+                        {/* Quantity + Add to cart */}
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center gap-4">
+                                {/* Qty stepper */}
+                                <div className="flex items-center border border-slate-200 dark:border-slate-800 rounded-xl h-12 bg-white dark:bg-slate-900 overflow-hidden">
+                                    <button
+                                        onClick={() => setQty(Math.max(1, qty - 1))}
+                                        className="px-4 h-full text-slate-500 hover:text-primary hover:bg-primary/5 transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">remove</span>
+                                    </button>
+                                    <span className="w-10 text-center font-bold text-slate-900 dark:text-slate-100 select-none">{qty}</span>
+                                    <button
+                                        onClick={() => setQty(Math.min(product.quantite_stock, qty + 1))}
+                                        disabled={!inStock}
+                                        className="px-4 h-full text-slate-500 hover:text-primary hover:bg-primary/5 transition-colors disabled:opacity-30"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">add</span>
                                     </button>
                                 </div>
-                                <button className="w-full h-12 border-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-lg flex items-center justify-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                                    <span className="material-symbols-outlined">favorite</span>
-                                    Add to Wishlist
-                                </button>
-                            </div>
 
-                            {/* Delivery info */}
-                            <div className="flex items-center gap-6 py-4 border-t border-slate-200 dark:border-slate-800">
-                                <div className="flex items-center gap-2 text-slate-500 text-sm">
-                                    <span className="material-symbols-outlined text-[#81e240]">local_shipping</span>
-                                    Free local delivery
-                                </div>
-                                <div className="flex items-center gap-2 text-slate-500 text-sm">
-                                    <span className="material-symbols-outlined text-[#81e240]">assignment_return</span>
-                                    2-day freshness guarantee
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Tabs Section */}
-                    <div className="mt-20 border-t border-slate-200 dark:border-slate-800 pt-12">
-                        <div className="flex gap-10 border-b border-slate-200 dark:border-slate-800 mb-8 overflow-x-auto whitespace-nowrap">
-                            {tabs.map((tab, i) => (
+                                {/* Add to cart button */}
                                 <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(i)}
-                                    className={`pb-4 border-b-2 font-medium text-lg ${activeTab === i ? 'border-[#81e240] text-slate-900 dark:text-white font-bold' : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
+                                    onClick={addToCart}
+                                    disabled={!inStock || addingToCart || isMaxed}
+                                    className={`flex-1 h-12 font-bold rounded-xl flex items-center justify-center gap-2 transition-all
+                                        ${cartSuccess
+                                            ? "bg-green-500 text-white"
+                                            : "bg-primary hover:bg-primary/90 text-slate-900"
+                                        } disabled:opacity-40 disabled:cursor-not-allowed`}
                                 >
-                                    {tab}
+                                    {addingToCart ? (
+                                        <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                                    ) : cartSuccess ? (
+                                        <>
+                                            <span className="material-symbols-outlined text-lg">check_circle</span>
+                                            Ajouté !
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="material-symbols-outlined text-lg">add_shopping_cart</span>
+                                            Ajouter au panier
+                                        </>
+                                    )}
                                 </button>
-                            ))}
+                            </div>
+                            {isMaxed && product.quantite_stock > 0 && (
+                                <p className="text-[10px] text-red-500 mt-1 font-semibold">
+                                    Quantité maximale atteinte dans le panier
+                                </p>
+                            )}
+                            {/* Wishlist button */}
+                            <button
+                                onClick={toggleFavori}
+                                disabled={favoriLoading}
+                                className={`w-full h-12 border-2 font-bold rounded-xl flex items-center justify-center gap-2 transition-all
+                                    ${isFavori
+                                        ? "border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/20 text-red-500"
+                                        : "border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                    } disabled:opacity-60 disabled:cursor-not-allowed`}
+                            >
+                                {favoriLoading ? (
+                                    <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                                ) : (
+                                    <span
+                                        className="material-symbols-outlined text-lg"
+                                        style={{ fontVariationSettings: isFavori ? "'FILL' 1" : "'FILL' 0" }}
+                                    >
+                                        favorite
+                                    </span>
+                                )}
+                                {isFavori ? "Retirer des favoris" : "Ajouter aux favoris"}
+                            </button>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-                            {/* Description & Reviews */}
-                            <div className="lg:col-span-2 space-y-6">
-                                <div>
-                                    <h3 className="text-xl font-bold mb-4">About Our Honeycrisp Apples</h3>
-                                    <p className="text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
-                                        Our Honeycrisp apples are harvested at the peak of ripeness from the sunny hillsides of Willow Creek Farms. Known for their explosive crunch and perfect balance of sweet and tart flavors, these apples are grown without synthetic pesticides or fertilizers.
-                                    </p>
-                                    <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                                        Each apple is hand-picked and carefully inspected to ensure you receive the highest quality fruit. Perfect for snacking, slicing into salads, or baking into a seasonal galette.
-                                    </p>
-                                    <ul className="mt-6 space-y-2">
-                                        {['Pesticide-free and non-GMO certified', 'Directly sourced from Willow Creek, Oregon', 'Compostable packaging used for all shipments'].map((item) => (
-                                            <li key={item} className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                                                <span className="material-symbols-outlined text-[#81e240] text-sm">check_circle</span>
-                                                {item}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-
-                                {/* Reviews */}
-                                <div className="pt-12">
-                                    <h3 className="text-xl font-bold mb-8">Customer Reviews</h3>
-                                    <div className="space-y-8">
-                                        {reviews.map((r) => (
-                                            <div key={r.name} className="flex gap-4 p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
-                                                <div className="h-10 w-10 rounded-full bg-slate-200 shrink-0 overflow-hidden">
-                                                    <div className="w-full h-full bg-center bg-cover" style={{ backgroundImage: `url('${r.avatar}')` }} />
-                                                </div>
-                                                <div>
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <p className="font-bold">{r.name}</p>
-                                                        <span className="text-xs text-slate-400">• {r.time}</span>
-                                                    </div>
-                                                    <Stars count={r.stars} total={5} size="text-yellow-400 text-sm" />
-                                                    <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mt-3">{r.text}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+                        {/* Delivery info */}
+                        <div className="flex flex-wrap items-center gap-4 py-4 border-t border-slate-200 dark:border-slate-800">
+                            <div className="flex items-center gap-2 text-slate-500 text-sm">
+                                <span className="material-symbols-outlined text-primary text-base">local_shipping</span>
+                                Livraison locale
                             </div>
-
-                            {/* Sidebar */}
-                            <div className="space-y-8">
-                                {/* Nutritional Facts */}
-                                <div className="p-6 rounded-xl bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                                    <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">Nutritional Facts</h4>
-                                    <div className="space-y-3">
-                                        {[
-                                            { label: 'Serving Size', value: '1 Medium Apple (182g)', bold: false },
-                                            { label: 'Calories', value: '95', bold: true },
-                                            { label: 'Total Fat', value: '0.3g', bold: false },
-                                            { label: 'Total Carbohydrate', value: '25g', bold: false },
-                                        ].map(({ label, value, bold }) => (
-                                            <div key={label} className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
-                                                <span className={`text-sm ${bold ? 'font-bold' : 'font-medium'}`}>{label}</span>
-                                                <span className={`text-sm ${bold ? 'font-bold' : ''}`}>{value}</span>
-                                            </div>
-                                        ))}
-                                        <div className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2 ml-4">
-                                            <span className="text-xs text-slate-500">Dietary Fiber</span>
-                                            <span className="text-xs font-bold">4.4g</span>
-                                        </div>
-                                        <div className="flex justify-between border-b border-slate-200 dark:border-slate-700 pb-2 ml-4">
-                                            <span className="text-xs text-slate-500">Sugars</span>
-                                            <span className="text-xs">19g</span>
-                                        </div>
-                                        <div className="flex justify-between pb-2">
-                                            <span className="text-sm font-medium">Protein</span>
-                                            <span className="text-sm">0.5g</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Origin */}
-                                <div className="p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-                                    <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">Origin</h4>
-                                    <div className="w-full h-40 rounded-lg mb-4 grayscale opacity-80 bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
-                                        <span className="material-symbols-outlined text-4xl text-slate-400">map</span>
-                                    </div>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400 italic">
-                                        &ldquo;Grown with love in the heart of the Willamette Valley since 1984.&rdquo;
-                                    </p>
-                                </div>
+                            <div className="flex items-center gap-2 text-slate-500 text-sm">
+                                <span className="material-symbols-outlined text-primary text-base">assignment_return</span>
+                                Fraîcheur garantie
+                            </div>
+                            <div className="flex items-center gap-2 text-slate-500 text-sm">
+                                <span className="material-symbols-outlined text-primary text-base">payments</span>
+                                Paiement à la livraison
                             </div>
                         </div>
                     </div>
-                </main>
+                </div>
 
-                {/* Footer */}
-                <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 md:px-20 lg:px-40 py-12">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-                        <div className="col-span-1">
-                            <div className="flex items-center gap-3 text-slate-900 dark:text-slate-100 mb-4">
-                                <span className="material-symbols-outlined text-[#81e240] text-2xl">eco</span>
-                                <h2 className="text-lg font-bold">EcoMarket</h2>
-                            </div>
-                            <p className="text-slate-500 text-sm leading-relaxed">Connecting local farmers with conscious consumers for a healthier planet and a better future.</p>
-                        </div>
-                        {[
-                            { title: 'Marketplace', links: ['All Categories', 'New Arrivals', 'Featured Vendors', 'Bulk Orders'] },
-                            { title: 'Support', links: ['Shipping Info', 'Returns & Refunds', 'Sustainability Report', 'Contact Us'] },
-                        ].map(({ title, links }) => (
-                            <div key={title}>
-                                <h4 className="font-bold text-sm uppercase tracking-widest mb-4">{title}</h4>
-                                <ul className="space-y-2 text-sm text-slate-500">
-                                    {links.map((l) => <li key={l}><a className="hover:text-[#81e240]" href="#">{l}</a></li>)}
-                                </ul>
-                            </div>
+                {/* ── Tabs Section ── */}
+                <div className="mt-20 border-t border-slate-200 dark:border-slate-800 pt-12">
+                    <div className="flex gap-10 border-b border-slate-200 dark:border-slate-800 mb-10 overflow-x-auto whitespace-nowrap">
+                        {tabs.map((tab, i) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(i)}
+                                className={`pb-4 border-b-2 font-medium text-lg transition-colors ${activeTab === i
+                                    ? "border-primary text-slate-900 dark:text-white font-bold"
+                                    : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                                    }`}
+                            >
+                                {tab}
+                            </button>
                         ))}
-                        <div>
-                            <h4 className="font-bold text-sm uppercase tracking-widest mb-4">Join Our Community</h4>
-                            <div className="flex gap-4">
-                                {['share', 'public', 'camera'].map((icon) => (
-                                    <a key={icon} className="h-10 w-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400" href="#">
-                                        <span className="material-symbols-outlined text-xl">{icon}</span>
-                                    </a>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
+                        {/* Main content */}
+                        <div className="lg:col-span-2 space-y-8">
+
+                            {/* Description tab */}
+                            {activeTab === 0 && (
+                                <div>
+                                    <h3 className="text-xl font-bold mb-4">Description</h3>
+                                    {product.description ? (
+                                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed whitespace-pre-line">
+                                            {product.description}
+                                        </p>
+                                    ) : (
+                                        <p className="text-slate-400 italic">Aucune description disponible.</p>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Reviews tab */}
+                            {activeTab === 1 && (
+                                <div>
+                                    <h3 className="text-xl font-bold mb-2">Avis clients</h3>
+
+                                    {/* Rating summary */}
+                                    <div className="flex items-center gap-4 mb-8 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                                        <div className="text-center">
+                                            <p className="text-5xl font-black text-slate-900 dark:text-white">{rating.toFixed(1)}</p>
+                                            <Stars count={rating} total={5} size="text-sm" />
+                                            <p className="text-xs text-slate-400 mt-1">{reviews.length} avis</p>
+                                        </div>
+                                        <div className="flex-1 space-y-1.5 pl-4 border-l border-slate-100 dark:border-slate-800">
+                                            {[5, 4, 3, 2, 1].map((star) => {
+                                                const count = reviews.filter((r) => Math.round(parseFloat(r.note)) === star).length;
+                                                const pct = reviews.length ? Math.round((count / reviews.length) * 100) : 0;
+                                                return (
+                                                    <div key={star} className="flex items-center gap-2">
+                                                        <span className="text-xs text-slate-400 w-4 text-right">{star}</span>
+                                                        <span className="material-symbols-outlined text-amber-400 text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                                                        <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                                            <div className="h-full bg-amber-400 rounded-full" style={{ width: `${pct}%` }} />
+                                                        </div>
+                                                        <span className="text-xs text-slate-400 w-8">{pct}%</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Review list */}
+                                    {reviews.length === 0 ? (
+                                        <div className="flex flex-col items-center py-12 text-slate-400 gap-3">
+                                            <span className="material-symbols-outlined text-4xl">rate_review</span>
+                                            <p className="text-sm">Aucun avis pour ce produit.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-6">
+                                            {reviews.map((r, i) => (
+                                                <div key={i} className="flex gap-4 p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                                        <span className="material-symbols-outlined text-primary text-lg">person</span>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center justify-between mb-1">
+                                                            <p className="font-bold text-slate-900 dark:text-white">
+                                                                {r.user_name || r.user || "Anonyme"}
+                                                            </p>
+                                                            <span className="text-xs text-slate-400">
+                                                                {r.created_at
+                                                                    ? new Date(r.created_at).toLocaleDateString("fr-DZ", { day: "numeric", month: "long", year: "numeric" })
+                                                                    : ""}
+                                                            </span>
+                                                        </div>
+                                                        <Stars count={parseFloat(r.note || 0)} total={5} size="text-xs" />
+                                                        {r.commentaire && (
+                                                            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mt-3">
+                                                                {r.commentaire}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Sidebar — product meta */}
+                        <div className="space-y-6">
+                            {/* Quick info card */}
+                            <div className="p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+                                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400">Informations</h4>
+                                {[
+                                    { icon: "category", label: "Catégorie", value: product.category_name || "—" },
+                                    { icon: "storefront", label: "Vendeur", value: product.seller_name || "—" },
+                                    { icon: "inventory_2", label: "Stock", value: inStock ? `${product.quantite_stock} disponible${product.quantite_stock > 1 ? "s" : ""}` : "Rupture" },
+                                    { icon: "sell", label: "Prix", value: `${parseFloat(product.prix).toLocaleString("fr-DZ")} دج` },
+                                ].map(({ icon, label, value }) => (
+                                    <div key={label} className="flex items-center gap-3 pb-3 border-b border-slate-100 dark:border-slate-800 last:border-0 last:pb-0">
+                                        <span className="material-symbols-outlined text-primary text-base">{icon}</span>
+                                        <div className="flex-1 flex justify-between items-center">
+                                            <span className="text-sm text-slate-500">{label}</span>
+                                            <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{value}</span>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
+
+                            {/* Share */}
+                            <div className="p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+                                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">Partager</h4>
+                                <div className="flex gap-3">
+                                    {[
+                                        { icon: "share", label: "Copier le lien" },
+                                        { icon: "public", label: "Web" },
+                                    ].map(({ icon, label }) => (
+                                        <button
+                                            key={icon}
+                                            className="flex-1 flex flex-col items-center gap-1 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-primary/10 hover:text-primary transition-colors text-slate-500"
+                                        >
+                                            <span className="material-symbols-outlined text-lg">{icon}</span>
+                                            <span className="text-[10px] font-bold">{label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Back to products */}
+                            <a
+                                href="/products"
+                                className="flex items-center gap-2 text-sm text-primary font-bold hover:underline px-2"
+                            >
+                                <span className="material-symbols-outlined text-sm">arrow_back</span>
+                                Retour aux produits
+                            </a>
                         </div>
                     </div>
-                    <div className="border-t border-slate-100 dark:border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                        <p className="text-slate-400 text-xs">© 2024 EcoMarket. All rights reserved. Locally sourced, globally minded.</p>
-                        <div className="flex gap-6 text-xs text-slate-400">
-                            <a className="hover:text-[#81e240]" href="#">Privacy Policy</a>
-                            <a className="hover:text-[#81e240]" href="#">Terms of Service</a>
+                </div >
+            </main >
+
+            {/* Footer */}
+            < footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 md:px-10 lg:px-20 xl:px-40 py-12" >
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                    <div className="col-span-1">
+                        <div className="flex items-center gap-3 text-slate-900 dark:text-slate-100 mb-4">
+                            <span className="material-symbols-outlined text-primary text-2xl">eco</span>
+                            <h2 className="text-lg font-bold">VitaMarket</h2>
+                        </div>
+                        <p className="text-slate-500 text-sm leading-relaxed">
+                            Rapprocher les producteurs locaux des consommateurs responsables.
+                        </p>
+                    </div>
+                    {[
+                        { title: "Marché", links: ["Toutes les catégories", "Nouveautés", "Vendeurs vedettes"] },
+                        { title: "Support", links: ["Livraison", "Retours & Remboursements", "Contactez-nous"] },
+                    ].map(({ title, links }) => (
+                        <div key={title}>
+                            <h4 className="font-bold text-sm uppercase tracking-widest mb-4">{title}</h4>
+                            <ul className="space-y-2 text-sm text-slate-500">
+                                {links.map((l) => <li key={l}><a className="hover:text-primary transition-colors" href="#">{l}</a></li>)}
+                            </ul>
+                        </div>
+                    ))}
+                    <div>
+                        <h4 className="font-bold text-sm uppercase tracking-widest mb-4">Communauté</h4>
+                        <div className="flex gap-3">
+                            {["share", "public", "camera"].map((icon) => (
+                                <a key={icon} className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+                                    <span className="material-symbols-outlined text-lg">{icon}</span>
+                                </a>
+                            ))}
                         </div>
                     </div>
-                </footer>
-            </div>
-        </>
+                </div>
+                <div className="border-t border-slate-100 dark:border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <p className="text-slate-400 text-xs">© 2024 VitaMarket. Tous droits réservés.</p>
+                    <div className="flex gap-6 text-xs text-slate-400">
+                        <a className="hover:text-primary" href="#">Confidentialité</a>
+                        <a className="hover:text-primary" href="#">CGU</a>
+                    </div>
+                </div>
+            </footer >
+        </div >
     )
 }
