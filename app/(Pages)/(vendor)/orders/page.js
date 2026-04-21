@@ -1,408 +1,679 @@
 'use client'
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
-// ─── Data ────────────────────────────────────────────────────────────────────
+// ─── Status config (Django choices) ──────────────────────────────────────────
+const STATUS_CONFIG = {
+    en_attente: { label: 'En attente', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400', dot: 'bg-amber-400' },
+    confirmee: { label: 'Confirmée', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400', dot: 'bg-blue-400' },
+    en_preparation: { label: 'En préparation', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400', dot: 'bg-purple-400' },
+    expediee: { label: 'Expédiée', color: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400', dot: 'bg-indigo-400' },
+    livree: { label: 'Livrée', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400', dot: 'bg-emerald-400' },
+    collectee: { label: 'Collectée', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400', dot: 'bg-emerald-400' },
+    annulee: { label: 'Annulée', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', dot: 'bg-red-400' },
+}
+const getStatus = (s) => STATUS_CONFIG[s] ?? { label: s ?? '—', color: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' }
+const ALL_STATUSES = Object.keys(STATUS_CONFIG)
 
-const AVATAR_URL =
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuAyc90nOxsvhKsTuIRkKy3iIGam4zvgj69LowKmKbNpkLMQx2oYmziqHXb4sYoD0eIfbgRgDMg_3PI_wLAA2eHXsVYsNN5rKGCW8ejOXI6bU3yfPwmDD3YXqDczvl0w04C-NbTw4BdG-hNEyuUdTQkd2oSzYsGC12cXfKtED2x6nBIb4adjpG2ynjdXHgekTSwWMcfozfRhYX0w6jjJNh8lx0idhK6IjH0EkwjoGBDRIsgACym467GCviD6A2sBODnGIodM-bFgz5NV";
+const TAB_FILTERS = {
+    'Toutes': null,
+    'En attente': ['en_attente'],
+    'Confirmée': ['confirmee'],
+    'En préparation': ['en_preparation'],
+    'Expédiée': ['expediee'],
+    'Livrée': ['livree'],
+    'Collectée': ['collectee'],
+    'Annulée': ['annulee'],
+}
+const TABS = Object.keys(TAB_FILTERS)
 
-const PRODUCT_IMAGES = {
-    watch: "https://lh3.googleusercontent.com/aida-public/AB6AXuA_jZ2lb8xtLafLRJCWli2ldOO9LL2UGMIgHV11O9Bt-z-KlYiPvzQeZEoSEwFJB2cYbx5HeYeUVpiyOlgLvcKWKdRGpWueoykHJsK_gwTIWcJD5xkX50sC9gRw1PlKPV9adCVuElN4dueziECwz3CWzTFmcAkA7Nm6TgwBlTEik675RseciJBxA1LKIkqEhhoPgi7R-4b_x_McRZx8Y9grIljBV5OGWw6_K87Bq5UUyLZL5goyqUfTDbSZBtsq0DrXObcjKL3VhpF2",
-    shoes: "https://lh3.googleusercontent.com/aida-public/AB6AXuB9g3jse6neNVu9MSREdD4PrcMNkeVcw1qkrRkRggDgQlxV8b-TlG-KJFHfYlaa4hfH_9BtUzOeHKv7VN7qzevjHfRaCzKQ88EJAYBA6nxRoaMTKY3L39lrjMuxgR3kZdTR-WDtC9XoH0KE_1f-3qL1dAoaqhITT2XR8T4G2q1Dt0UtpQbghw86uSXWDEFvoZQUsPI3wcHwuaDfNnug6HVzXpQamNaqSCdLZQRSZRrxS_5qHGbvBus7slMwiZnrQf9EnDbP7iGzrFgk",
-    headphones1: "https://lh3.googleusercontent.com/aida-public/AB6AXuC4UY5YywT-1TD9PB-SFjsZaXOzMt0XFZQqyKRyX7gsmTRwRZhEXuk1Wpv4t3-sEbXcje2fuw2KWBMJWLNXB1rg2seMBg3gy9NlfTwzVbxVez8YOb9Ti19CqLcA9UTwGBuAV9qY59bSXDybiQB9ThDnKcRhIzdplrV5mNJ4y2WSGW8GMXC6Hj7upPGAYON4K2D_2Jhm6RHz8gUqVzkCK9LcT7dByWLzidMt9tvPkf3EiDrV-TuMadzl2a5S9zqodaFJ43qljRMrpGkv",
-    camera: "https://lh3.googleusercontent.com/aida-public/AB6AXuCZ0CSncuVg049sp0gm5WvL9Neq56wJ7MzxOT7zPwjtXE0MZqMQ8PnWronx0HwZ6x68n2iIOgZLUA-CPVn6UVclarORWkIp4Ust9SStGW7DWzEJRW4gwx1Lgp8CQt0xUE-xYumB6XJP9nY7TRDY1VcSV2rlfiVUJ9M-0Y0wkJc3BnE8TM8cnT1Javn8ibENa0xyTV531dF6hpsPbwn3FukW0_Ugh5VpgLcWUUI5FYR56xnpmvwg4DqfmQamRENgm48c0PJ98REsY96y",
-    headphones2: "https://lh3.googleusercontent.com/aida-public/AB6AXuButW4ETiuXJRIC9b_bcGauoWLvXbTUJzuuVlTOw1VfV58gw5-fOabxjtUxV0ibm2rFvIM6_fo6y0Suck7X9Pb1LQyLNEFDA0k0hAMclA6PHA6ju-N-KqXisAYXch3ovSOuWPblj3tS2lBFKoA81m8sowZm_MhIo5zzB3PfuYQB7oPyHIlEDKxVan1jxmx1c6STjp_QC4vp0K_Ke3ixLeoMMuTQ1UH3v6dhUs9QpeBH5aa9oP6WBDroVy6h5VT69Nhrtao4D62ogUkJ",
-    desk: "https://lh3.googleusercontent.com/aida-public/AB6AXuABXfRrp6RQ0KHQPYkD1N3mFnLuffEUM0DgrBVzMzyQPIEpezlTGCWasU1OlrYWDjU6CS7H0suwO_bgbh62Ut59Rij_8UKv0RqTvkLbxbSBbtK1a0nPA2hn6_T-AVSoxZ1qeqCSUVh7jtyNUK1Jqu61ceQJQ6I2W7rx39gDIo_0fN0tpIbkbwejxAat-weWQ9vG3jcwss6zKVnQfb-zrovBWY-KJkW9kzzLq_OqiJf0eEl0NovBerTQd8OUNCEonkSNLe2rb4T-op8v",
-};
+const NEXT_STATUS = {
+    en_attente: 'confirmee',
+    confirmee: 'en_preparation',
+    en_preparation: 'expediee',
+    expediee: 'livree',
+    livree: 'collectee',
+}
 
-const INITIAL_ORDERS = [
-    {
-        id: "#ORD-9421",
-        customer: { initials: "JD", name: "Jane Doe" },
-        products: [PRODUCT_IMAGES.watch, PRODUCT_IMAGES.shoes],
-        extra: 1,
-        total: "$299.00",
-        status: "Pending",
-    },
-    {
-        id: "#ORD-9420",
-        customer: { initials: "MA", name: "Marc Andre" },
-        products: [PRODUCT_IMAGES.headphones1],
-        extra: 0,
-        total: "$120.00",
-        status: "Validated",
-    },
-    {
-        id: "#ORD-9419",
-        customer: { initials: "SL", name: "Sarah Lee" },
-        products: [PRODUCT_IMAGES.camera, PRODUCT_IMAGES.headphones2],
-        extra: 0,
-        total: "$450.50",
-        status: "Shipped",
-    },
-    {
-        id: "#ORD-9418",
-        customer: { initials: "RB", name: "Robert Brown" },
-        products: [PRODUCT_IMAGES.desk],
-        extra: 0,
-        total: "$89.00",
-        status: "Pending",
-    },
-];
+const getOrderStatut = (order) => order.lignes?.[0]?.statut ?? order.statut
 
-const NAV_ITEMS = [
-    { icon: "dashboard", label: "Dashboard", active: false },
-    { icon: "shopping_bag", label: "Orders", active: true },
-    { icon: "inventory_2", label: "Products", active: false },
-    { icon: "group", label: "Customers", active: false },
-];
-
-const SYSTEM_NAV = [
-    { icon: "settings", label: "Settings" },
-    { icon: "help", label: "Support" },
-];
-
-const STATS = [
-    { label: "Total Orders", value: "1,284", accent: null, badge: "+12%", badgeGreen: true },
-    { label: "Pending", value: "24", accent: "#f59e0b", sub: "Action required" },
-    { label: "Validated", value: "86", accent: "#3b82f6", sub: "Ready for ship" },
-    { label: "Shipped Today", value: "52", accent: "#81e240", badge: "+8%", badgeGreen: true },
-];
-
-const TABS = ["All Orders", "Pending", "Validated", "Shipped"];
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const MatIcon = ({ name, size = 22, filled = false, style: s = {} }) => (
-    <span
-        style={{
-            fontFamily: "Material Symbols Outlined",
-            fontWeight: "normal",
-            fontStyle: "normal",
-            fontSize: size,
-            display: "inline-block",
-            lineHeight: 1,
-            letterSpacing: "normal",
-            textTransform: "none",
-            whiteSpace: "nowrap",
-            userSelect: "none",
-            fontVariationSettings: filled
-                ? "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24"
-                : "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24",
-            ...s,
-        }}
-    >
-        {name}
-    </span>
-);
-
-const statusConfig = {
-    Pending: { bg: "#fef3c7", color: "#b45309", dot: "#f59e0b" },
-    Validated: { bg: "#dbeafe", color: "#1d4ed8", dot: "#3b82f6" },
-    Shipped: { bg: "rgba(129,226,64,0.2)", color: "#365314", dot: "#81e240" },
-};
-
-const StatusBadge = ({ status }) => {
-    const cfg = statusConfig[status] || statusConfig.Pending;
-    return (
-        <span style={{
-            display: "inline-flex", alignItems: "center",
-            padding: "2px 10px", borderRadius: 9999,
-            fontSize: 11, fontWeight: 700,
-            backgroundColor: cfg.bg, color: cfg.color,
-        }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: cfg.dot, marginRight: 6 }} />
-            {status}
-        </span>
-    );
-};
-
-// ─── Main Component ───────────────────────────────────────────────────────────
-
-export default function OrderManagement() {
-    const [orders, setOrders] = useState(INITIAL_ORDERS);
-    const [activeTab, setActiveTab] = useState("All Orders");
-    const [search, setSearch] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
-
-    const handleAction = (orderId) => {
-        setOrders((prev) =>
-            prev.map((o) => {
-                if (o.id !== orderId) return o;
-                if (o.status === "Pending") return { ...o, status: "Validated" };
-                if (o.status === "Validated") return { ...o, status: "Shipped" };
-                return o;
+const patchLignes = async (lignes, newStatus) => {
+    await Promise.all(
+        lignes.map((ligne) =>
+            fetch(`http://localhost:8000/lignes/${ligne.id}/`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ statut: newStatus }),
             })
-        );
-    };
+        )
+    )
+}
 
-    const filteredOrders = orders.filter((o) => {
-        const matchTab = activeTab === "All Orders" || o.status === activeTab;
-        const matchSearch =
-            !search ||
-            o.id.toLowerCase().includes(search.toLowerCase()) ||
-            o.customer.name.toLowerCase().includes(search.toLowerCase());
-        return matchTab && matchSearch;
-    });
+const fmt = (n) => parseFloat(n ?? 0).toLocaleString('fr-DZ')
+
+// ─── Mini avatar ──────────────────────────────────────────────────────────────
+const AVATAR_COLORS = [
+    ['#dcfce7', '#16a34a'], ['#dbeafe', '#2563eb'], ['#fce7f3', '#db2777'],
+    ['#fef3c7', '#d97706'], ['#ede9fe', '#7c3aed'], ['#ffedd5', '#ea580c'],
+    ['#f0fdf4', '#15803d'], ['#f0f9ff', '#0284c7'],
+]
+function MiniAvatar({ name = '', size = 8 }) {
+    const letter = (name?.[0] ?? '?').toUpperCase()
+    const idx = letter.charCodeAt(0) % AVATAR_COLORS.length
+    const [bg, text] = AVATAR_COLORS[idx]
+    return (
+        <div
+            className={`w-${size} h-${size} rounded-full flex items-center justify-center text-[10px] font-extrabold shrink-0`}
+            style={{ background: bg, color: text }}
+        >
+            {letter}
+        </div>
+    )
+}
+
+// ─── Status badge ─────────────────────────────────────────────────────────────
+function StatusBadge({ statut }) {
+    const cfg = getStatus(statut)
+    return (
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${cfg.color}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+            {cfg.label}
+        </span>
+    )
+}
+
+// ─── Status change dropdown ───────────────────────────────────────────────────
+function StatusDropdown({ order, onUpdated, onClose }) {
+    const [loading, setLoading] = useState(false)
+    const currentStatut = getOrderStatut(order)
+
+    const handleChange = async (newStatus) => {
+        if (newStatus === currentStatut) { onClose(); return }
+        setLoading(true)
+        try {
+            await patchLignes(order.lignes, newStatus)
+            onUpdated(order.id, newStatus)
+            onClose()
+        } catch (e) { console.error(e) }
+        finally { setLoading(false) }
+    }
 
     return (
-        <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+        <div className="absolute right-0 top-9 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl w-52 overflow-hidden">
+            <p className="px-4 pt-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                {loading ? 'Mise à jour...' : 'Changer le statut'}
+            </p>
+            <div className="p-1 pb-2">
+                {ALL_STATUSES.map((s) => {
+                    const cfg = getStatus(s)
+                    const isCurrent = s === currentStatut
+                    return (
+                        <button key={s} onClick={() => handleChange(s)} disabled={loading || isCurrent}
+                            className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors
+                                ${isCurrent ? 'bg-slate-50 dark:bg-slate-800 cursor-default' : 'hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer'}
+                                disabled:opacity-60`}>
+                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${cfg.color}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                                {cfg.label}
+                            </span>
+                            {isCurrent && <span className="material-symbols-outlined text-primary text-sm">check</span>}
+                        </button>
+                    )
+                })}
+            </div>
+        </div>
+    )
+}
+
+// ─── Order Detail Modal (same as dashboard) ───────────────────────────────────
+const STEPS = [
+    { key: 'en_attente', label: 'En attente' },
+    { key: 'confirmee', label: 'Confirmée' },
+    { key: 'en_preparation', label: 'En prép.' },
+    { key: 'expediee', label: 'Expédiée' },
+    { key: 'livree', label: 'Livrée' },
+    { key: 'collectee', label: 'Collectée' },
+]
+const STEP_MAP = { en_attente: 0, confirmee: 1, en_preparation: 2, expediee: 3, livree: 4, collectee: 5 }
+
+function OrderModal({ order, onClose, onStatusChange }) {
+    const modalRef = useRef(null)
+    const [advancing, setAdvancing] = useState(false)
+    const currentStatut = getOrderStatut(order)
+    const nextStatus = NEXT_STATUS[currentStatut]
+    const currentStep = STEP_MAP[currentStatut] ?? 0
+    const isCancelled = currentStatut === 'annulee'
+
+    useEffect(() => {
+        const h = (e) => { if (e.key === 'Escape') onClose() }
+        document.addEventListener('keydown', h)
+        return () => document.removeEventListener('keydown', h)
+    }, [onClose])
+
+    useEffect(() => {
+        document.body.style.overflow = 'hidden'
+        return () => { document.body.style.overflow = '' }
+    }, [])
+
+    const handleAdvance = async () => {
+        if (!nextStatus) return
+        setAdvancing(true)
+        try {
+            await patchLignes(order.lignes, nextStatus)
+            onStatusChange(order.id, nextStatus)
+        } catch (e) { console.error(e) }
+        finally { setAdvancing(false) }
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+
+            {/* Modal */}
+            <div
+                ref={modalRef}
+                className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]"
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                    <div className="flex items-center gap-3">
+                        <div className={`size-10 rounded-xl flex items-center justify-center ${getStatus(currentStatut).color}`}>
+                            <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
+                                {currentStatut === 'annulee' ? 'cancel' :
+                                    currentStatut === 'livree' || currentStatut === 'collectee' ? 'check_circle' :
+                                        'shopping_bag'}
+                            </span>
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                                Commande #{order.numero_commande}
+                            </h2>
+                            <p className="text-xs text-slate-400">
+                                {new Date(order.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <StatusBadge statut={currentStatut} />
+                        <button onClick={onClose}
+                            className="size-9 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500">
+                            <span className="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Scrollable body */}
+                <div className="overflow-y-auto flex-1 p-6 space-y-6">
+
+                    {/* Progress bar */}
+                    {!isCancelled ? (
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Progression</p>
+                            <div className="relative flex items-center justify-between mb-3">
+                                <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-slate-200 dark:bg-slate-700 rounded-full" />
+                                <div
+                                    className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary rounded-full transition-all duration-500"
+                                    style={{ width: `${(currentStep / (STEPS.length - 1)) * 100}%` }}
+                                />
+                                {STEPS.map((step, i) => (
+                                    <div key={step.key}
+                                        className={`relative z-10 size-4 rounded-full shrink-0 transition-all
+                                            ${i <= currentStep ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'}
+                                            ${i === currentStep ? 'ring-4 ring-primary/20' : ''}`}
+                                    />
+                                ))}
+                            </div>
+                            <div className="flex justify-between">
+                                {STEPS.map((step, i) => (
+                                    <span key={step.key}
+                                        className={`text-[9px] font-bold uppercase tracking-wide flex-1 transition-colors
+                                            ${i === currentStep ? 'text-primary' : i < currentStep ? 'text-slate-400' : 'text-slate-300 dark:text-slate-600'}
+                                            ${i === 0 ? 'text-left' : i === STEPS.length - 1 ? 'text-right' : 'text-center'}`}>
+                                        {step.label}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/20 rounded-xl border border-red-100 dark:border-red-900">
+                            <span className="material-symbols-outlined text-red-500">info</span>
+                            <p className="text-sm font-medium text-red-600 dark:text-red-400">Cette commande a été annulée.</p>
+                        </div>
+                    )}
+
+                    {/* Two columns: customer + address */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Client</p>
+                            <div className="flex items-center gap-3 mb-3">
+                                <MiniAvatar name={order.nom} size={10} />
+                                <div>
+                                    <p className="font-bold text-sm text-slate-900 dark:text-slate-100">{order.nom ?? '—'}</p>
+                                    {order.email && <p className="text-xs text-slate-500">{order.email}</p>}
+                                    {order.telephone && <p className="text-xs text-slate-500">{order.telephone}</p>}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Adresse de livraison</p>
+                            {order.adresse_livraison ? (
+                                <div className="flex items-start gap-2">
+                                    <span className="material-symbols-outlined text-primary text-sm mt-0.5">location_on</span>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{order.adresse_livraison}</p>
+                                </div>
+                            ) : (
+                                <p className="text-sm text-slate-400 italic">Non renseignée</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Articles */}
+                    <div>
+                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
+                            Articles ({order.lignes?.length ?? 0})
+                        </p>
+                        <div className="space-y-2">
+                            {order.lignes?.map((ligne) => (
+                                <div key={ligne.id} className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                                    <div className="size-14 rounded-xl overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0">
+                                        <img src={ligne.produit_url} alt={ligne.produit_nom}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => { e.target.src = 'https://via.placeholder.com/56?text=?' }} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{ligne.produit_nom}</p>
+                                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                            <span className="text-xs text-slate-500">Qté : {ligne.quantite}</span>
+                                            <span className="text-slate-300">•</span>
+                                            <span className="text-xs text-slate-500">{fmt(ligne.prix_unitaire)} دج / unité</span>
+                                            {ligne.statut && <StatusBadge statut={ligne.statut} />}
+                                        </div>
+                                    </div>
+                                    <p className="text-sm font-black text-slate-900 dark:text-slate-100 shrink-0">
+                                        {fmt(parseFloat(ligne.prix_unitaire) * ligne.quantite)} دج
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Totals */}
+                    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden">
+                        <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                            <div className="px-5 py-3 flex justify-between text-sm">
+                                <span className="text-slate-500">Sous-total</span>
+                                <span className="font-medium">{fmt(order.sous_total)} دج</span>
+                            </div>
+                            <div className="px-5 py-3 flex justify-between text-sm">
+                                <span className="text-slate-500">Livraison</span>
+                                <span className={`font-medium ${parseFloat(order.frais_livraison ?? 0) === 0 ? 'text-primary' : ''}`}>
+                                    {parseFloat(order.frais_livraison ?? 0) === 0 ? 'Gratuite' : `${fmt(order.frais_livraison)} دج`}
+                                </span>
+                            </div>
+                            <div className="px-5 py-4 flex justify-between font-bold text-base">
+                                <span>Total</span>
+                                <span className="text-primary">{fmt(order.total)} دج</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer actions */}
+                <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 shrink-0 flex gap-3">
+                    <button onClick={onClose}
+                        className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                        Fermer
+                    </button>
+                    {nextStatus && (
+                        <button onClick={handleAdvance} disabled={advancing}
+                            className="flex-1 py-2.5 rounded-xl bg-primary hover:brightness-105 disabled:opacity-60 text-slate-900 text-sm font-bold transition-all flex items-center justify-center gap-2">
+                            {advancing
+                                ? <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                                : <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                            }
+                            Passer à : {getStatus(nextStatus).label}
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+export default function OrderManagement() {
+    const [orders, setOrders] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [activeTab, setActiveTab] = useState('Toutes')
+    const [search, setSearch] = useState('')
+    const [currentPage, setCurrentPage] = useState(1)
+    const [openMenuId, setOpenMenuId] = useState(null)
+    const [selectedOrder, setSelectedOrder] = useState(null)
+    const ITEMS_PER_PAGE = 10
+
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const res = await fetch("http://localhost:8000/commandes/vendeur/", { credentials: "include" })
+                if (res.ok) {
+                    const data = await res.json()
+                    setOrders(Array.isArray(data) ? data : data.results ?? [])
+                }
+            } catch (e) { console.error(e) }
+            finally { setLoading(false) }
+        }
+        load()
+    }, [])
+
+    useEffect(() => {
+        const h = () => setOpenMenuId(null)
+        window.addEventListener('click', h)
+        return () => window.removeEventListener('click', h)
+    }, [])
+
+    const handleStatusUpdated = (id, newStatus) => {
+        const patch = (o) => o.id !== id ? o : {
+            ...o,
+            statut: newStatus,
+            lignes: o.lignes.map((l) => ({ ...l, statut: newStatus })),
+        }
+        setOrders((prev) => prev.map(patch))
+        setSelectedOrder((prev) => prev ? patch(prev) : prev)
+    }
+
+    const tabCounts = TABS.reduce((acc, tab) => {
+        const filter = TAB_FILTERS[tab]
+        acc[tab] = filter
+            ? orders.filter((o) => filter.includes(getOrderStatut(o))).length
+            : orders.length
+        return acc
+    }, {})
+
+    const filtered = orders.filter((o) => {
+        const filter = TAB_FILTERS[activeTab]
+        const tabMatch = !filter || filter.includes(getOrderStatut(o))
+        const searchMatch = !search
+            || o.numero_commande?.toLowerCase().includes(search.toLowerCase())
+            || o.nom?.toLowerCase().includes(search.toLowerCase())
+            || o.email?.toLowerCase().includes(search.toLowerCase())
+        return tabMatch && searchMatch
+    })
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE))
+    const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+
+    const handleTabChange = (tab) => { setActiveTab(tab); setCurrentPage(1) }
+    const handleSearch = (v) => { setSearch(v); setCurrentPage(1) }
+
+    const kpis = [
+        { label: 'Total commandes', value: orders.length, icon: 'shopping_bag', color: 'bg-primary/10 text-primary' },
+        { label: 'En attente', value: orders.filter(o => getOrderStatut(o) === 'en_attente').length, icon: 'schedule', color: 'bg-amber-500/10 text-amber-500' },
+        { label: 'En cours', value: orders.filter(o => ['confirmee', 'en_preparation', 'expediee'].includes(getOrderStatut(o))).length, icon: 'pending_actions', color: 'bg-blue-500/10 text-blue-500' },
+        { label: 'Livrées', value: orders.filter(o => ['livree', 'collectee'].includes(getOrderStatut(o))).length, icon: 'check_circle', color: 'bg-emerald-500/10 text-emerald-600' },
+    ]
+
+    return (
+        <div className="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display min-h-screen">
+
+            {selectedOrder && (
+                <OrderModal
+                    order={selectedOrder}
+                    onClose={() => setSelectedOrder(null)}
+                    onStatusChange={handleStatusUpdated}
+                />
+            )}
+
             <div className="flex h-screen overflow-hidden">
-                {/* Side Navigation */}
+                <main className="flex-1 flex flex-col overflow-y-auto w-full">
+                    <div className="p-8 space-y-8 max-w-7xl mx-auto w-full">
 
-                {/* Main Content Area */}
-                <main className="flex-1 flex flex-col overflow-y-auto">
+                        <div>
+                            <h2 className="text-3xl font-extrabold tracking-tight">Gestion des commandes</h2>
+                            <p className="text-slate-500 mt-1">Suivez et mettez à jour toutes vos commandes.</p>
+                        </div>
 
-
-
-                    {/* Content */}
-                    <div style={{ padding: 32, display: "flex", flexDirection: "column", gap: 32 }}>
-
-                        {/* Stats */}
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24 }}>
-                            {STATS.map((s) => (
-                                <div key={s.label} style={{
-                                    backgroundColor: "#fff", padding: 24, borderRadius: 12,
-                                    border: "1px solid rgba(129,226,64,0.1)",
-                                }}>
-                                    <p style={{ color: "#94a3b8", fontSize: 13, fontWeight: 500 }}>{s.label}</p>
-                                    <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginTop: 8 }}>
-                                        <h3 style={{ fontSize: 30, fontWeight: 900, color: s.accent || "#0f172a" }}>{s.value}</h3>
-                                        {s.badge && (
-                                            <span style={{
-                                                fontSize: 12, fontWeight: 700,
-                                                backgroundColor: "rgba(129,226,64,0.1)", color: "#81e240",
-                                                padding: "2px 8px", borderRadius: 9999,
-                                            }}>{s.badge}</span>
-                                        )}
-                                        {s.sub && <span style={{ fontSize: 11, color: "#94a3b8" }}>{s.sub}</span>}
+                        {/* KPIs */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            {kpis.map(({ label, value, icon, color }) => (
+                                <div key={label} className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-500">{label}</p>
+                                            <h3 className="text-3xl font-black mt-1">{value}</h3>
+                                        </div>
+                                        <div className={`p-2 rounded-xl ${color}`}>
+                                            <span className="material-symbols-outlined">{icon}</span>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        {/* Table Card */}
-                        <div style={{ backgroundColor: "#fff", borderRadius: 12, border: "1px solid rgba(129,226,64,0.1)", overflow: "hidden" }}>
+                        {/* Table card */}
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
 
-                            {/* Tabs */}
-                            <div style={{
-                                display: "flex", alignItems: "center",
-                                padding: "0 24px", borderBottom: "1px solid rgba(129,226,64,0.1)",
-                                gap: 24,
-                            }}>
-                                {TABS.map((tab) => (
-                                    <button
-                                        key={tab}
-                                        onClick={() => setActiveTab(tab)}
-                                        style={{
-                                            background: "none", border: "none", cursor: "pointer",
-                                            fontSize: 13, fontWeight: activeTab === tab ? 700 : 500,
-                                            color: activeTab === tab ? "#81e240" : "#94a3b8",
-                                            padding: "16px 0",
-                                            borderBottom: activeTab === tab ? "2px solid #81e240" : "2px solid transparent",
-                                            fontFamily: "'Manrope', sans-serif",
-                                        }}
-                                    >
-                                        {tab}
-                                    </button>
-                                ))}
-                                <div style={{ flex: 1 }} />
-                                <button style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}>
-                                    <MatIcon name="filter_list" />
-                                </button>
+                            {/* Tabs + search */}
+                            <div className="border-b border-slate-100 dark:border-slate-800">
+                                <div className="flex items-center gap-0 overflow-x-auto px-6 pt-2">
+                                    {TABS.map((tab) => (
+                                        <button key={tab} onClick={() => handleTabChange(tab)}
+                                            className={`flex items-center gap-1.5 whitespace-nowrap px-4 py-3 border-b-2 text-sm font-semibold transition-all
+                                                ${activeTab === tab
+                                                    ? 'border-primary text-primary'
+                                                    : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}>
+                                            {tab}
+                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full
+                                                ${activeTab === tab ? 'bg-primary/20 text-primary' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                                                {tabCounts[tab]}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="px-6 py-3 flex items-center gap-3">
+                                    <div className="relative flex-1 max-w-sm">
+                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                                        <input value={search} onChange={(e) => handleSearch(e.target.value)}
+                                            placeholder="Rechercher par n° commande, client..."
+                                            className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" />
+                                        {search && (
+                                            <button onClick={() => handleSearch('')}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                                <span className="material-symbols-outlined text-sm">close</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                    <span className="text-xs text-slate-400 ml-auto">
+                                        {filtered.length} résultat{filtered.length !== 1 ? 's' : ''}
+                                    </span>
+                                </div>
                             </div>
 
                             {/* Table */}
-                            <div style={{ overflowX: "auto" }}>
-                                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-                                    <thead style={{ backgroundColor: "#f8fafc" }}>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase text-[11px] font-bold tracking-wider">
                                         <tr>
-                                            {["Order ID", "Customer", "Products", "Total", "Status", "Actions"].map((h, i) => (
-                                                <th key={h} style={{
-                                                    padding: "14px 24px", fontSize: 11, fontWeight: 700,
-                                                    textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8",
-                                                    textAlign: i === 5 ? "right" : "left",
-                                                }}>{h}</th>
-                                            ))}
+                                            <th className="px-6 py-4">N° Commande</th>
+                                            <th className="px-6 py-4">Client</th>
+                                            <th className="px-6 py-4">Date</th>
+                                            <th className="px-6 py-4">Articles</th>
+                                            <th className="px-6 py-4">Total</th>
+                                            <th className="px-6 py-4">Statut lignes</th>
+                                            <th className="px-6 py-4">Action rapide</th>
+                                            <th className="px-6 py-4 text-right">Menu</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        {filteredOrders.map((order) => (
-                                            <OrderRow key={order.id} order={order} onAction={handleAction} />
-                                        ))}
-                                        {filteredOrders.length === 0 && (
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                        {loading ? (
                                             <tr>
-                                                <td colSpan={6} style={{ padding: 48, textAlign: "center", color: "#94a3b8", fontSize: 14 }}>
-                                                    No orders found.
+                                                <td colSpan={8} className="py-20 text-center">
+                                                    <span className="material-symbols-outlined animate-spin text-4xl text-primary">progress_activity</span>
                                                 </td>
                                             </tr>
-                                        )}
+                                        ) : paginated.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={8} className="py-20 text-center text-slate-400">
+                                                    <span className="material-symbols-outlined text-4xl block mb-2">search_off</span>
+                                                    Aucune commande trouvée.
+                                                </td>
+                                            </tr>
+                                        ) : paginated.map((order) => {
+                                            const currentStatut = getOrderStatut(order)
+                                            const nextStatus = NEXT_STATUS[currentStatut]
+                                            const nextCfg = nextStatus ? getStatus(nextStatus) : null
+
+                                            return (
+                                                <tr key={order.id}
+                                                    className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
+                                                    onClick={() => setSelectedOrder(order)}
+                                                >
+                                                    {/* Order # */}
+                                                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                                                        <button onClick={() => setSelectedOrder(order)}
+                                                            className="text-sm font-bold hover:text-primary transition-colors">
+                                                            #{order.numero_commande}
+                                                        </button>
+                                                    </td>
+
+                                                    {/* Customer */}
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-2.5">
+                                                            <MiniAvatar name={order.nom} />
+                                                            <div>
+                                                                <p className="text-sm font-medium leading-tight">{order.nom ?? '—'}</p>
+                                                                {order.email && <p className="text-[11px] text-slate-400">{order.email}</p>}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Date */}
+                                                    <td className="px-6 py-4 text-sm text-slate-500 whitespace-nowrap">
+                                                        {new Date(order.created_at).toLocaleDateString('fr-FR', {
+                                                            day: 'numeric', month: 'short', year: 'numeric'
+                                                        })}
+                                                    </td>
+
+                                                    {/* Article thumbnails */}
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center">
+                                                            {order.lignes?.slice(0, 3).map((ligne, i) => (
+                                                                <div key={ligne.id}
+                                                                    className={`w-8 h-8 rounded-full overflow-hidden border-2 border-white dark:border-slate-900 bg-slate-100 shrink-0 ${i > 0 ? '-ml-2' : ''}`}
+                                                                    title={ligne.produit_nom}>
+                                                                    <img src={ligne.produit_url} alt={ligne.produit_nom}
+                                                                        className="w-full h-full object-cover"
+                                                                        onError={(e) => { e.target.src = 'https://via.placeholder.com/32?text=?' }} />
+                                                                </div>
+                                                            ))}
+                                                            {(order.lignes?.length ?? 0) > 3 && (
+                                                                <div className="w-8 h-8 rounded-full bg-primary/20 border-2 border-white dark:border-slate-900 -ml-2 flex items-center justify-center text-[10px] font-bold text-primary">
+                                                                    +{order.lignes.length - 3}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Total */}
+                                                    <td className="px-6 py-4 text-sm font-bold whitespace-nowrap">
+                                                        {parseFloat(order.total ?? 0).toLocaleString('fr-DZ')} دج
+                                                    </td>
+
+                                                    {/* Status */}
+                                                    <td className="px-6 py-4">
+                                                        <StatusBadge statut={currentStatut} />
+                                                    </td>
+
+                                                    {/* Quick advance */}
+                                                    <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                                                        {nextCfg ? (
+                                                            <button
+                                                                onClick={async () => {
+                                                                    try {
+                                                                        await patchLignes(order.lignes, nextStatus)
+                                                                        handleStatusUpdated(order.id, nextStatus)
+                                                                    } catch (e) { console.error(e) }
+                                                                }}
+                                                                className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-slate-900 transition-all"
+                                                            >
+                                                                <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                                                                {nextCfg.label}
+                                                            </button>
+                                                        ) : (
+                                                            <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
+                                                        )}
+                                                    </td>
+
+                                                    {/* Menu */}
+                                                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                                        <div className="relative inline-block">
+                                                            <button
+                                                                onClick={() => setOpenMenuId(openMenuId === order.id ? null : order.id)}
+                                                                className="material-symbols-outlined text-slate-400 hover:text-primary transition-colors"
+                                                            >
+                                                                more_vert
+                                                            </button>
+                                                            {openMenuId === order.id && (
+                                                                <StatusDropdown
+                                                                    order={order}
+                                                                    onUpdated={handleStatusUpdated}
+                                                                    onClose={() => setOpenMenuId(null)}
+                                                                />
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
 
                             {/* Pagination */}
-                            <div style={{
-                                padding: "16px 24px", borderTop: "1px solid rgba(129,226,64,0.1)",
-                                display: "flex", alignItems: "center", justifyContent: "space-between",
-                            }}>
-                                <p style={{ fontSize: 11, color: "#94a3b8" }}>
-                                    Showing 1 to {filteredOrders.length} of 1,284 entries
-                                </p>
-                                <div style={{ display: "flex", gap: 8 }}>
-                                    {[null, 1, 2, 3, null].map((p, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => p && setCurrentPage(p)}
-                                            style={{
-                                                width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center",
-                                                borderRadius: 6, border: p === currentPage ? "none" : "1px solid rgba(129,226,64,0.2)",
-                                                backgroundColor: p === currentPage ? "#81e240" : "transparent",
-                                                color: p === currentPage ? "#182111" : "#64748b",
-                                                fontWeight: p === currentPage ? 700 : 400,
-                                                fontSize: 12, cursor: "pointer",
-                                            }}
-                                        >
-                                            {p === null && i === 0 ? <MatIcon name="chevron_left" size={18} /> : null}
-                                            {p === null && i === 4 ? <MatIcon name="chevron_right" size={18} /> : null}
-                                            {p !== null ? p : null}
+                            {totalPages > 1 && (
+                                <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                    <p className="text-xs text-slate-400">
+                                        {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} sur {filtered.length}
+                                    </p>
+                                    <div className="flex items-center gap-1">
+                                        <button onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}
+                                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+                                            <span className="material-symbols-outlined text-sm">chevron_left</span>
                                         </button>
-                                    ))}
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                                            .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                                            .reduce((acc, p, i, arr) => {
+                                                if (i > 0 && p - arr[i - 1] > 1) acc.push('...')
+                                                acc.push(p)
+                                                return acc
+                                            }, [])
+                                            .map((p, i) =>
+                                                p === '...' ? (
+                                                    <span key={`e${i}`} className="w-8 h-8 flex items-center justify-center text-xs text-slate-400">…</span>
+                                                ) : (
+                                                    <button key={p} onClick={() => setCurrentPage(p)}
+                                                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold transition-all
+                                                            ${currentPage === p ? 'bg-primary text-slate-900' : 'border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                                                        {p}
+                                                    </button>
+                                                )
+                                            )}
+                                        <button onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+                                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+                                            <span className="material-symbols-outlined text-sm">chevron_right</span>
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
+
+                        <footer className="text-xs text-slate-400 pt-4 pb-6">
+                            © 2024 VitaMarket. Tous droits réservés.
+                        </footer>
                     </div>
                 </main>
             </div>
         </div>
-    );
-}
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function NavLink({ icon, label, active }) {
-    const [hovered, setHovered] = useState(false);
-    return (
-        <a
-            href="#"
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-            style={{
-                display: "flex", alignItems: "center", gap: 12,
-                padding: "8px 12px", borderRadius: 8, textDecoration: "none",
-                fontSize: 13, fontWeight: active ? 700 : 500,
-                backgroundColor: active ? "#81e240" : hovered ? "rgba(129,226,64,0.1)" : "transparent",
-                color: active ? "#182111" : hovered ? "#81e240" : "#64748b",
-                transition: "all 0.15s",
-            }}
-        >
-            <MatIcon name={icon} />
-            {label}
-        </a>
-    );
-}
-
-function OrderRow({ order, onAction }) {
-    const [hovered, setHovered] = useState(false);
-
-    return (
-        <tr
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-            style={{
-                borderTop: "1px solid rgba(129,226,64,0.05)",
-                backgroundColor: hovered ? "rgba(129,226,64,0.04)" : "transparent",
-                transition: "background-color 0.15s",
-            }}
-        >
-            {/* Order ID */}
-            <td style={{ padding: "16px 24px", fontWeight: 700, fontSize: 13 }}>{order.id}</td>
-
-            {/* Customer */}
-            <td style={{ padding: "16px 24px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{
-                        width: 32, height: 32, borderRadius: "50%", backgroundColor: "#e2e8f0",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 11, fontWeight: 700, color: "#475569", flexShrink: 0,
-                    }}>
-                        {order.customer.initials}
-                    </div>
-                    <span style={{ fontSize: 13, fontWeight: 500 }}>{order.customer.name}</span>
-                </div>
-            </td>
-
-            {/* Products */}
-            <td style={{ padding: "16px 24px" }}>
-                <div style={{ display: "flex" }}>
-                    {order.products.map((src, i) => (
-                        <div key={i} style={{
-                            width: 32, height: 32, borderRadius: "50%",
-                            border: "2px solid #fff", overflow: "hidden",
-                            backgroundColor: "#e2e8f0",
-                            marginLeft: i > 0 ? -8 : 0,
-                        }}>
-                            <img src={src} alt="product" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        </div>
-                    ))}
-                    {order.extra > 0 && (
-                        <div style={{
-                            width: 32, height: 32, borderRadius: "50%",
-                            border: "2px solid #fff", backgroundColor: "rgba(129,226,64,0.2)",
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: 10, fontWeight: 700, marginLeft: -8,
-                        }}>
-                            +{order.extra}
-                        </div>
-                    )}
-                </div>
-            </td>
-
-            {/* Total */}
-            <td style={{ padding: "16px 24px", fontSize: 13, fontWeight: 700 }}>{order.total}</td>
-
-            {/* Status */}
-            <td style={{ padding: "16px 24px" }}>
-                <StatusBadge status={order.status} />
-            </td>
-
-            {/* Actions */}
-            <td style={{ padding: "16px 24px", textAlign: "right" }}>
-                {order.status === "Pending" && (
-                    <ActionButton label="Validate" onClick={() => onAction(order.id)} outlined />
-                )}
-                {order.status === "Validated" && (
-                    <ActionButton label="Mark as Shipped" onClick={() => onAction(order.id)} />
-                )}
-                {order.status === "Shipped" && (
-                    <button style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 6 }}>
-                        <MatIcon name="more_vert" size={20} />
-                    </button>
-                )}
-            </td>
-        </tr>
-    );
-}
-
-function ActionButton({ label, onClick, outlined = false }) {
-    const [hovered, setHovered] = useState(false);
-    return (
-        <button
-            onClick={onClick}
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-            style={{
-                padding: "6px 12px", borderRadius: 6, border: "none",
-                fontSize: 11, fontWeight: 700, cursor: "pointer",
-                backgroundColor: outlined
-                    ? hovered ? "#81e240" : "rgba(129,226,64,0.2)"
-                    : "#81e240",
-                color: "#182111",
-                transition: "all 0.15s",
-                fontFamily: "'Manrope', sans-serif",
-            }}
-        >
-            {label}
-        </button>
-    );
+    )
 }

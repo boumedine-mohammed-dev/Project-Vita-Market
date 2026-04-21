@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/app/Store/useAuthStore";
 
 export default function Navbarvendor() {
-    const { user } = useAuthStore();
+    const { user, logout } = useAuthStore();
     const pathname = usePathname();
     const [active, setActive] = useState(pathname);
     const link = [
@@ -48,26 +48,20 @@ export default function Navbarvendor() {
                             <span className="text-sm">{item.label}</span>
                         </Link>
                     ))}
+                    <Link
+                        href="/login"
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        onClick={() => {
+                            setActive("/login");
+                            logout();
+                        }}
+                    >
+                        <span className="material-symbols-outlined">logout</span>
+                        <span className="text-sm">Logout</span>
+                    </Link>
                 </nav>
             </div>
 
-            <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-3 p-2 border-t border-slate-100 dark:border-slate-800 pt-4">
-                    <div
-                        className="w-10 h-10 rounded-full bg-slate-200 bg-cover bg-center"
-                        style={{
-                            backgroundImage:
-                                "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAxiTd_zsht7_tm4mFQ6AsA7SrUcCnFz_XODkQYUutbGFK9u0vwHq3C3rgnn09Y_1v42GL05u6mFDs07Agb9RSqj5d9uO3F6N2Knivvw_HOFInOTm1vAm9bQeKbVDWlsxJR9aRkWyOmLOsrWatYGtxjZXTlfwlsKRhaLvMkVGbAXl8xOV4j2fEdsL4ToKLBi9ASaszmPROF4I7SLqsknRMr79c5svxaBzAH3rZHGcnWgb42y8iNPRlNL6C_t3LLbBz4_8DdW3fGNtEf')",
-                        }}
-                    ></div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold truncate">Fresh Greens Co.</p>
-                        <p className="text-xs text-slate-500 truncate">
-                            Pro Plan Member
-                        </p>
-                    </div>
-                </div>
-            </div>
         </aside>
     )
 }

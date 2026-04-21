@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useClientStore } from "@/app/Store/useClientStore"
 import { useAuthStore } from "@/app/Store/useAuthStore"
-
+import jsPDF from "jspdf";
 const WILAYAS = [
     "01 - Adrar", "02 - Chlef", "03 - Laghouat", "04 - Oum El Bouaghi",
     "05 - Batna", "06 - Béjaïa", "07 - Biskra", "08 - Béchar",
@@ -58,7 +58,54 @@ export default function CheckoutPage() {
     const handleChange = (e) => {
         setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
+    const generateFacture = (commande) => {
+        try {
+            const doc = new jsPDF();
 
+            // 🧾 Header
+            doc.setFontSize(18);
+            doc.text("Facture", 14, 20);
+
+            doc.setFontSize(10);
+            doc.text(`Commande #${commande.numero_commande}`, 14, 30);
+            doc.text(`Date: ${new Date(commande.created_at ?? Date.now()).toLocaleDateString("fr-DZ")}`, 14, 36);
+
+            // 👤 Client
+            doc.text(`Nom: ${commande.nom}`, 14, 46);
+            doc.text(`Email: ${commande.email ?? form.email}`, 14, 52);
+            doc.text(`Téléphone: ${commande.telephone}`, 14, 58);
+            doc.text(`Adresse: ${commande.adresse_livraison}`, 14, 64);
+
+            // 📦 Produits
+            let y = 76;
+            doc.text("Produits:", 14, y);
+            y += 6;
+
+            const lines = commande.lignes ?? lignes;
+            lines.forEach((ligne) => {
+                const nom = ligne.produit_nom ?? ligne.produit_nom ?? "Produit";
+                const qte = ligne.quantite;
+                const prix = parseFloat(ligne.prix_unitaire ?? 0);
+                doc.text(`${nom} x${qte} - ${(prix * qte).toLocaleString("fr-DZ")} DA`, 14, y);
+                y += 6;
+            });
+
+            // 💰 Totaux
+            y += 10;
+            doc.text(`Sous-total: ${Number(commande.sous_total ?? cartSubtotal).toLocaleString("fr-DZ")} DA`, 14, y);
+            y += 6;
+            doc.text(`Livraison: ${Number(commande.frais_livraison ?? DELIVERY_FEE).toLocaleString("fr-DZ")} DA`, 14, y);
+            y += 6;
+            doc.setFontSize(12);
+            doc.text(`TOTAL: ${Number(commande.total ?? grandTotal).toLocaleString("fr-DZ")} DA`, 14, y);
+
+            // 📥 Auto-download
+            doc.save(`facture-${commande.numero_commande ?? "commande"}.pdf`);
+
+        } catch (e) {
+            console.error("Erreur génération facture:", e.message);
+        }
+    };
     const handleSubmit = async () => {
         if (!form.fullName || !form.phone || !form.address || !form.wilaya) {
             setError("Veuillez remplir tous les champs obligatoires.");
@@ -67,6 +114,12 @@ export default function CheckoutPage() {
         setError(null);
         setLoading(true);
         try {
+            const isGuest = !user;
+            const lignesPayload = isGuest ? lignes.map(l => ({
+                produit: l.produit_ID ?? l.produit,
+                quantite: l.quantite
+            })) : undefined;
+
             const res = await fetch("http://localhost:8000/commandes/", {
                 method: "POST",
                 credentials: "include",
@@ -82,12 +135,18 @@ export default function CheckoutPage() {
                     frais_livraison: DELIVERY_FEE,
                     numero_suivi: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
                     numero_commande: Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
+                    ...(isGuest && { lignes: lignesPayload })
                 }),
             });
             const data = await res.json();
             console.log(data);
             if (!res.ok) throw new Error(data.error);
+
+            // ✅ Auto-generate & download invoice
+            generateFacture(data);
+
             setSubmitted(true);
+            useClientStore.getState().clearCart();
 
         } catch (err) {
             setError(err.message);

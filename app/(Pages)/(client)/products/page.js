@@ -2,6 +2,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useClientStore } from "@/app/Store/useClientStore";
+import { useAuthStore } from "@/app/Store/useAuthStore";
 import Link from "next/link";
 
 export default function ProductsPage() {
@@ -205,6 +206,16 @@ export default function ProductsPage() {
     };
 
     const addToCart = async (productId) => {
+        const product = products.find(p => p.id === productId);
+        if (!product) return;
+
+        const user = useAuthStore.getState().user;
+        if (!user) {
+            useClientStore.getState().addToCartLocal(product, 1);
+            alert("Produit ajouté au panier (Invité) 🛒");
+            return;
+        }
+
         try {
             const res = await fetch("http://localhost:8000/panier/add_product/", {
                 method: "POST",

@@ -4,6 +4,7 @@ import "./globals.css";
 import { useAuthStore } from "./Store/useAuthStore";
 import { useEffect } from "react";
 
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -33,6 +34,7 @@ export default function RootLayout({ children }) {
 
 
         {children}
+
 
       </body>
     </html>

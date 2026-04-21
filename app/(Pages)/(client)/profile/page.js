@@ -296,8 +296,9 @@ function OrderActionsMenu({ commande, onCancel, onDelete, onClose }) {
         if (!confirm('Supprimer définitivement cette commande ?')) return
         setDeleting(true)
         try {
-            await fetch(`http://localhost:8000/commandes/${commande.id}/`, {
-                method: 'DELETE', credentials: 'include',
+            const res = await fetch(`http://localhost:8000/commandes/${commande.id}/delete_for_client/`, {
+                method: 'PATCH',
+                credentials: 'include',
             })
             onDelete(commande.id); onClose()
         } catch (e) { console.error(e) }
@@ -549,7 +550,7 @@ export default function ProfilePage() {
     const [loadingCommandes, setLoadingCommandes] = useState(false)
     const [favoris, setFavoris] = useState([])
     const [loadingFavoris, setLoadingFavoris] = useState(false)
-
+    console.log(commandes)
     useEffect(() => {
         const load = async () => {
             setLoadingCommandes(true)
@@ -829,6 +830,7 @@ export default function ProfilePage() {
                                             const isMaxed = cartQty >= fav.quantite_stock;
                                             return (
                                                 <div key={fav.id} className="group bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-md transition-all">
+
                                                     <div className="aspect-square bg-cover bg-center relative" style={{ backgroundImage: `url('${fav.produit_url}')` }}>
                                                         <button onClick={() => handleRemoveFavori(fav.id)}
                                                             className="absolute top-2 right-2 size-8 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-red-500 flex items-center justify-center hover:scale-110 transition-transform">

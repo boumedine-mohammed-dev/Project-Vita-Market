@@ -1,11 +1,22 @@
 'use client'
+import { useAuthStore } from "@/app/Store/useAuthStore";
 import { useClientStore } from "@/app/Store/useClientStore";
 import Link from "next/link";
 import { useEffect, useState } from "react"
 
-function ProductCard({ id, category_name, url, seller_name, nom, prix, quantite_stock, note_moyenne, tag }) {
+function ProductCard({ products, id, category_name, url, seller_name, nom, prix, quantite_stock, note_moyenne, tag }) {
   const { increment, cart, syncCart } = useClientStore();
+  console.log(products)
   const addToCart = async (productId) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const user = useAuthStore.getState().user;
+    if (!user) {
+      useClientStore.getState().addToCartLocal(product, 1);
+      alert("Produit ajouté au panier (Invité) 🛒");
+      return;
+    }
     try {
       const res = await fetch("http://localhost:8000/panier/add_product/", {
         method: "POST",
@@ -35,10 +46,12 @@ function ProductCard({ id, category_name, url, seller_name, nom, prix, quantite_
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100 dark:border-slate-700 group">
       <div className="relative aspect-square overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-500"
-          style={{ backgroundImage: `url('${url}')` }}
-        />
+        <Link href={`/products/${id}`}>
+          <div
+            className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-500"
+            style={{ backgroundImage: `url('${url}')` }}
+          />
+        </Link>
         {quantite_stock <= 5 && quantite_stock > 0 && (
           <div className="absolute top-3 left-3 bg-amber-400 text-slate-900 text-[10px] font-bold px-2 py-1 rounded shadow-sm">
             PRESQUE ÉPUISÉ
@@ -116,7 +129,7 @@ export default function FeaturedProducts() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {featuredProducts.map((p) => (
-          <ProductCard key={p.id} {...p} />
+          <ProductCard key={p.id} {...p} products={featuredProducts} />
         ))}
       </div>
     </section>

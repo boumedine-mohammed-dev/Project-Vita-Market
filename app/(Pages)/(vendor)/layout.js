@@ -1,12 +1,13 @@
 import Navbarvendor from "../components/Navbarvendor";
 import Navbarvendortop from "../components/Navbarvendortop";
+import RoleGuard from "../components/RoleGuard";
+
 export default function RootLayout({ children }) {
     return (
 
 
-        <>
-
-            <div className="flex h-screen overflow-hidden">
+        <RoleGuard allowedRoles={["vendeur"]}>
+            <div className="flex flex-col md:flex-row h-screen overflow-hidden">
 
                 <Navbarvendor />
                 <div className="flex-1 flex flex-col overflow-y-auto">
@@ -14,7 +15,7 @@ export default function RootLayout({ children }) {
                     {children}
                 </div>
             </div>
-        </>
+        </RoleGuard>
 
     );
 }

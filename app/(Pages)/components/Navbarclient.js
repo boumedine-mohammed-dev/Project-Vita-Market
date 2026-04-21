@@ -3,6 +3,7 @@
 import { useAuthStore } from "@/app/Store/useAuthStore";
 import { useClientStore } from "@/app/Store/useClientStore";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 
 const getCategoryIcon = (nom = "") => {
@@ -31,6 +32,7 @@ export default function Navbar() {
   const closeTimer = useRef(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileTimer = useRef(null);
+  const navigate = useRouter();
   const openProfile = () => {
     clearTimeout(profileTimer.current);
     setProfileOpen(true);
@@ -70,6 +72,10 @@ export default function Navbar() {
   const closeMenu = () => {
     closeTimer.current = setTimeout(() => setMenuOpen(false), 120);
   };
+  const handleLogout = () => {
+    logout();
+    navigate.push('/');
+  }
 
   return (
     <nav className="font-display sticky top-0 z-50 bg-white/80 dark:bg-[#182111]/80 backdrop-blur-md border-b border-primary/10">
@@ -254,7 +260,7 @@ export default function Navbar() {
                       </Link>
 
                       <button
-                        onClick={logout}
+                        onClick={handleLogout}
                         className="w-full text-left px-4 py-2 text-sm hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
                       >
                         Déconnexion

@@ -1,6 +1,6 @@
 'use client'
-import { create } from "zustand";
 
+import { create } from "zustand";
 export const useAuthStore = create((set) => ({
     user: null,
     loading: true,
@@ -65,6 +65,7 @@ export const useAuthStore = create((set) => ({
             method: "POST",
             credentials: "include",
         });
+
         set({ user: null });
     },
 }));

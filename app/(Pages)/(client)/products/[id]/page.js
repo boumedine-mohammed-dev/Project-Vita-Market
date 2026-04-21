@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { useClientStore } from "@/app/Store/useClientStore"
+import { useAuthStore } from "@/app/Store/useAuthStore"
 
 function Stars({ count, total = 5, size = "text-sm" }) {
     const rating = parseFloat(count) || 0;
@@ -100,6 +101,15 @@ export default function ProductDetailsPage() {
 
     const addToCart = async () => {
         if (addingToCart) return;
+
+        const user = useAuthStore.getState().user;
+        if (!user) {
+            useClientStore.getState().addToCartLocal(product, qty);
+            setCartSuccess(true);
+            setTimeout(() => setCartSuccess(false), 3000);
+            return;
+        }
+
         setAddingToCart(true);
         try {
             const res = await fetch("http://localhost:8000/panier/add_product/", {
