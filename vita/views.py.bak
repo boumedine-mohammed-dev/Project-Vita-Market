@@ -1,8 +1,8 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.mixins import CreateModelMixin
-from .models import User,Produit,Categorie,Panier,LignePanier,ProfilClient,ProfilVendeur,Commande,LigneCommande,Favori,Avis,Notification
-from .serializers import RegisterSerializer,LoginSerializer,MeSerializer,ProductSerializer,CategorySerializer,PanierSerializer,LignePanierUpdateSerializer,ProfilClientSerializer,ProfilVendeurSerializer,CommandeSerializer,FavoriSerializer,AvisSerializer,MeUpdateSerializer,NotificationSerializer
+from .models import User,Produit,Categorie,Panier,LignePanier,ProfilClient,ProfilVendeur,Commande,LigneCommande,Favori,Avis
+from .serializers import RegisterSerializer,LoginSerializer,MeSerializer,ProductSerializer,CategorySerializer,PanierSerializer,LignePanierUpdateSerializer,ProfilClientSerializer,ProfilVendeurSerializer,CommandeSerializer,FavoriSerializer,AvisSerializer,MeUpdateSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import action
 from django.contrib.auth import authenticate
@@ -138,22 +138,14 @@ class MeAuthViewSet(viewsets.ViewSet):
     @action(detail=False, methods=["patch"], url_path="update")
     def update_me(self, request):
         user = request.user
-
-        # 🔒 checks (تبقى كما هي)
-        if "email" in request.data:
-            if User.objects.exclude(id=user.id).filter(email=request.data["email"]).exists():
-                return Response({"error": "Email already used"}, status=400)
-
-        if "username" in request.data:
-            if User.objects.exclude(id=user.id).filter(username=request.data["username"]).exists():
-                return Response({"error": "Username already used"}, status=400)
-
-        # 🔥 unified serializer (router)
+        if User.objects.exclude(id=user.id).filter(email=request.data['email']).exists():
+            return Response({"error": "Email already used"}, status=status.HTTP_400_BAD_REQUEST)
+        if User.objects.exclude(id=user.id).filter(username=request.data['username']).exists():
+            return Response({"error": "Username already used"}, status=status.HTTP_400_BAD_REQUEST)
         serializer = MeUpdateSerializer(user, data=request.data, partial=True)
 
         if serializer.is_valid():
-            user = serializer.save()
-
+            serializer.save()
             return Response(MeSerializer(user).data)
 
         return Response(serializer.errors, status=400)
@@ -209,27 +201,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         products = Produit.objects.select_related("id_categorie", "id_vendeur")
         serializer = self.get_serializer(products, many=True)
         return Response(serializer.data)
-
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-
-        data = request.data.copy()
-
-        # ✅ image upload
-        image = request.FILES.get("url")
-
-        if image:
-            upload_result = cloudinary.uploader.upload(image)
-            data["url"] = upload_result["secure_url"]
-
-        serializer = self.get_serializer(instance, data=data, partial=partial)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-
-        return Response(serializer.errors, status=400)
 
 
 
@@ -303,85 +274,37 @@ class PanierViewSet(viewsets.ModelViewSet):
 
 class CommandeViewSet(viewsets.ModelViewSet):
     serializer_class = CommandeSerializer
-
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-
-        # 👤 CLIENT
-        if user.type_user == "client":
-            return Commande.objects.filter(
-            id_client=user,
-            is_deleted_by_client=False
-        )
-
-    # 🏪 VENDOR
-        if user.type_user == "vendeur":
-            commande_ids = LigneCommande.objects.filter(
-                id_vendeur=user
-            ).values_list("id_commande", flat=True)
-
-            return Commande.objects.filter(
-            id__in=commande_ids,
-            is_deleted_by_vendor=False
-        ).distinct()
-
-        return Commande.objects.none()
+        return Commande.objects.filter(id_client=self.request.user)
     @transaction.atomic
     def create(self, request, *args, **kwargs):
+        user = request.user
 
-        user = request.user if request.user.is_authenticated else None
+        # 🛒 نجيب panier
+        panier = Panier.objects.filter(user=user).first()
 
-    # =========================
-    # 👤 CLIENT CONNECTÉ
-    # =========================
-        if user:
-            panier = Panier.objects.filter(user=user).first()
+        if not panier or not panier.lignes.exists():
+            return Response({"error": "Panier vide"}, status=400)
 
-            if not panier or not panier.lignes.exists():
-                return Response({"error": "Panier vide"}, status=400)
+        # ✅ إنشاء commande
+        lignes_panier = LignePanier.objects.filter(id_panier=panier)
 
-            lignes_panier = list(LignePanier.objects.filter(id_panier=panier))
-
-    # =========================
-    # 👤 INVITE (GUEST)
-    # =========================
-        else:
-            lignes_data = request.data.get("lignes", [])
-
-            if not lignes_data:
-                return Response({"error": "Panier vide (invite)"}, status=400)
-
-            lignes_panier = lignes_data
-
-    # =========================
-    # 🔥 STOCK CHECK
-    # =========================
         for ligne in lignes_panier:
-
-            if user:
-                produit = ligne.id_produit
-                quantite = ligne.quantite
-            else:
-                produit = Produit.objects.get(id=ligne["produit"])
-                quantite = ligne["quantite"]
-
-            if produit.quantite_stock < quantite:
+            produit = ligne.id_produit
+            if produit.quantite_stock < ligne.quantite:
                 return Response(
                     {"error": f"Stock insuffisant pour {produit.nom}"},
                     status=400
                 )
-
-    # =========================
-    # 🧾 CREATE COMMANDE
-    # =========================
         commande = Commande.objects.create(
             id_client=user,
             nom=request.data.get("nom"),
             email=request.data.get("email"),
             telephone=request.data.get("telephone"),
             adresse_livraison=request.data.get("adresse_livraison"),
-            statut="en_attente",
+            statut=request.data.get("statut", "en attente"),
             sous_total=request.data.get("sous_total"),
             frais_livraison=request.data.get("frais_livraison"),
             total=request.data.get("total"),
@@ -389,54 +312,22 @@ class CommandeViewSet(viewsets.ModelViewSet):
             numero_suivi=request.data.get("numero_suivi"),
         )
 
-        vendeurs = set()
-
-    # =========================
-    # 📦 CREATE LIGNES
-    # =========================
         for ligne in lignes_panier:
-
-            if user:
-                produit = ligne.id_produit
-                quantite = ligne.quantite
-                prix = ligne.prix_unitaire
-            else:
-                produit = Produit.objects.get(id=ligne["produit"])
-                quantite = ligne["quantite"]
-                prix = produit.prix
-
+            produit = ligne.id_produit
             LigneCommande.objects.create(
                 id_commande=commande,
-                id_produit=produit,
-                quantite=quantite,
-                prix_unitaire=prix,
-                id_vendeur=produit.id_vendeur,
-                sous_total=quantite * prix,
+                id_produit=ligne.id_produit,
+                quantite=ligne.quantite,
+                prix_unitaire=ligne.prix_unitaire,
+                id_vendeur=ligne.id_produit.id_vendeur,
+                sous_total=ligne.quantite * ligne.prix_unitaire,
             )
-
-            produit.quantite_stock -= quantite
+            produit.quantite_stock -= ligne.quantite
             produit.save()
+        lignes_panier.delete()
+        serializer = self.get_serializer(commande)
+        return Response(serializer.data, status=201)
 
-            vendeurs.add(produit.id_vendeur)
-
-    # =========================
-    # 🔔 NOTIFICATIONS
-    # =========================
-        for vendeur in vendeurs:
-            Notification.objects.create(
-                user=vendeur,
-                titre="Nouvelle commande",
-                message=f"Commande #{commande.numero_commande} reçue"
-            )
-
-    # =========================
-    # 🧹 CLEAR PANIER CLIENT
-    # =========================
-        if user:
-            panier.lignes.all().delete()
-
-        return Response(self.get_serializer(commande).data, status=201)
-    
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         old_status = instance.statut
@@ -463,118 +354,14 @@ class CommandeViewSet(viewsets.ModelViewSet):
         lignes = LigneCommande.objects.filter(id_commande=commande)
 
         for ligne in lignes:
-            ligne.statut = "annulee"
-            ligne.save()
             produit = ligne.id_produit
             produit.quantite_stock += ligne.quantite
             produit.save()
 
-        vendeurs = set()
-        for ligne in lignes:
-            vendeurs.add(ligne.id_vendeur)
-
-        for vendeur in vendeurs:
-            Notification.objects.create(
-                user=vendeur,
-                titre="Commande annulée",
-                message=f"Commande #{commande.numero_commande} annulée"
-            )
         commande.statut = "annulee"
         commande.save()
 
-
         return Response({"message": "Commande annulée"})
-
-    @action(detail=False, methods=["get"], url_path="vendeur", permission_classes=[IsAuthenticated])
-    def commandes_vendeur(self, request):
-        user = request.user
-
-        if user.type_user != "vendeur":
-            return Response({"error": "Unauthorized"}, status=403)
-
-        lignes = LigneCommande.objects.filter(id_vendeur=user).select_related(
-            "id_commande", "id_produit"
-        )[:10]if request.query_params.get("limit") else LigneCommande.objects.filter(id_vendeur=user).select_related(
-            "id_commande", "id_produit"
-        )
-
-        commandes_map = {}
-
-        for ligne in lignes:
-            cmd = ligne.id_commande
-
-            if cmd.id not in commandes_map:
-                commandes_map[cmd.id] = {
-                    "id": cmd.id,
-                "numero_commande": cmd.numero_commande,
-                "nom": cmd.nom,
-                "email": cmd.email,
-                "telephone": cmd.telephone,
-                "adresse_livraison": cmd.adresse_livraison,
-                "statut": ligne.statut,
-                "created_at": cmd.created_at,
-                "total": 0,
-                "lignes": []
-            }
-
-            commandes_map[cmd.id]["total"] += ligne.sous_total
-
-            commandes_map[cmd.id]["lignes"].append({
-                "id": ligne.id,
-                "produit_nom": ligne.id_produit.nom,
-                "produit_url": ligne.id_produit.url,
-                "quantite": ligne.quantite,
-                "prix_unitaire": ligne.prix_unitaire,
-                "sous_total": ligne.sous_total,
-                "statut": ligne.statut,
-        })
-
-        return Response(list(commandes_map.values()))
-    @action(detail=True, methods=["patch"], permission_classes=[IsAuthenticated])
-    def delete_for_client(self, request, pk=None):
-        commande = self.get_object()
-
-        if commande.id_client != request.user:
-            return Response({"error": "Unauthorized"}, status=403)
-
-        commande.is_deleted_by_client = True
-        commande.save()
-
-        return Response({"message": "Commande masquée pour le client"})
-
-class LigneCommandeViewSet(viewsets.ModelViewSet):
-    queryset = LigneCommande.objects.all()
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-
-        if user.type_user == "vendeur":
-            return LigneCommande.objects.filter(id_vendeur=user)
-
-        return LigneCommande.objects.none()
-
-    def update(self, request, *args, **kwargs):
-        ligne = self.get_object()
-        print(ligne)
-        
-        # 🔒 حماية: vendeur يبدل غير lignes تاعه
-        if ligne.id_vendeur != request.user:
-            return Response({"error": "Unauthorized"}, status=403)
-
-        new_status = request.data.get("statut")
-
-        # 💡 تقدر تضيف status في LigneCommande (أفضل)
-        ligne.statut = new_status
-        # بعد update status
-        Notification.objects.create(
-            user=ligne.id_vendeur,
-            titre="Mise à jour commande",
-            message=f"Votre commande a été mise à jour: {new_status}"
-        )
-        ligne.save()
-
-        return Response({"message": "Status updated"})
 
 class FavoriViewSet(viewsets.ModelViewSet):
     serializer_class = FavoriSerializer
@@ -754,38 +541,13 @@ class VendorDashboardViewSet(viewsets.ViewSet):
                 "raw_id": cmd.id,
                 "customer": {
                     "name": cmd.nom,
-                    "initials": "".join([part[0] for part in cmd.nom.split() if part]).upper()[:2] if cmd.nom else "C",
-                    "email": cmd.email,
-                    "phone": cmd.telephone,
+                    "initials": "".join([part[0] for part in cmd.nom.split() if part]).upper()[:2] if cmd.nom else "C"
                 },
                 "products": [l.id_produit.url for l in v_lignes if l.id_produit.url][:3],
                 "extra": max(0, v_lignes.count() - 3),
                 "total": f"{total_vendeur.normalize() if isinstance(total_vendeur, __import__('decimal').Decimal) else total_vendeur} دج",
-                "status": "Pending" if v_lignes.first().statut in ["en_attente", "en attente"] else "Validated" if v_lignes.first().statut == "confirmee" else "Shipped" if v_lignes.first().statut == "expediee" else "Delivered" if v_lignes.first().statut == "livree" else "Pending",
+                "status": "Pending" if cmd.statut in ["en_attente", "en attente"] else "Validated" if cmd.statut == "confirmee" else "Shipped" if cmd.statut == "expediee" else "Delivered" if cmd.statut == "livree" else "Pending",
                 "created_at": cmd.created_at.strftime("%b %d, %Y")
             })
             
         return Response(data)
-class NotificationViewSet(viewsets.ModelViewSet):
-    serializer_class = NotificationSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return Notification.objects.filter(user=self.request.user).order_by("-created_at")
-
-    @action(detail=True, methods=["patch"])
-    def mark_read(self, request, pk=None):
-        notif = self.get_object()
-        notif.lu = True
-        notif.save()
-        return Response({"status": "ok"})
-
-    @action(detail=False, methods=["post"])
-    def mark_all_read(self, request):
-        Notification.objects.filter(user=request.user, lu=False).update(lu=True)
-        return Response({"status": "ok"})
-    @action(detail=False, methods=["delete"])
-    def delete_all(self, request):
-        Notification.objects.filter(user=request.user).delete()
-        return Response({"status": "ok"})
-    

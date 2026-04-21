@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User,Produit,Categorie,LignePanier,Panier,ProfilClient,ProfilVendeur,Commande,LigneCommande,Favori,Avis
+from .models import User,Produit,Categorie,LignePanier,Panier,ProfilClient,ProfilVendeur,Commande,LigneCommande,Favori,Avis,Notification
 import re
 
 
@@ -150,29 +150,87 @@ class AvisSerializer(serializers.ModelSerializer):
         fields = ["id", "note", "commentaire", "produit_nom", "user", "created_at"]
 
 class MeUpdateSerializer(serializers.ModelSerializer):
-    adresse_livraison = serializers.CharField(source="profil_client.adresse_livraison", required=False)
+    adresse_livraison = serializers.CharField(required=False)
+
+    # vendor fields
+    nom_boutique = serializers.CharField(required=False)
+    adresse_boutique = serializers.CharField(required=False)
+    description = serializers.CharField(required=False)
 
     class Meta:
         model = User
-        fields = ["nom", "prenom", "telephone", "email", "adresse_livraison"]
+        fields = [
+            "username",
+            "nom",
+            "prenom",
+            "telephone",
+            "email",
+            "adresse_livraison",
+            "nom_boutique",
+            "adresse_boutique",
+            "description",
+        ]
 
     def update(self, instance, validated_data):
-        profil_data = validated_data.pop("profil_client", None)
+        # 1️⃣ update user fields
+        user_fields = ["nom", "prenom", "telephone", "email","username"]
 
-        # update user
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
+        for field in user_fields:
+            if field in validated_data:
+                setattr(instance, field, validated_data[field])
+
         instance.save()
 
-        # update profile
-        if profil_data:
-            profil = instance.profil_client
-            profil.adresse_livraison = profil_data.get("adresse_livraison", profil.adresse_livraison)
-            profil.save()
+        # 2️⃣ CLIENT update
+        if instance.type_user == "client":
+            from .serializers import ClientProfileUpdateSerializer
+
+            profile_data = {
+                "adresse_livraison": validated_data.get("adresse_livraison")
+            }
+
+            if hasattr(instance, "profil_client"):
+                serializer = ClientProfileUpdateSerializer(
+                    instance.profil_client,
+                    data=profile_data,
+                    partial=True
+                )
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+
+        # 3️⃣ VENDOR update
+        elif instance.type_user == "vendeur":
+            from .serializers import VendorProfileUpdateSerializer
+
+            profile_data = {
+                "nom_boutique": validated_data.get("nom_boutique"),
+                "adresse_boutique": validated_data.get("adresse_boutique"),
+                "description": validated_data.get("description"),
+            }
+
+            if hasattr(instance, "profil_vendeur"):
+                serializer = VendorProfileUpdateSerializer(
+                    instance.profil_vendeur,
+                    data=profile_data,
+                    partial=True
+                )
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
 
         return instance
 
-class ProfilClientUpdateSerializer(serializers.ModelSerializer):
+class ClientProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfilClient
         fields = ["adresse_livraison"]
+
+class VendorProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfilVendeur
+        fields = ["nom_boutique", "adresse_boutique", "description"]
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = "__all__"
+        read_only_fields = ["user", "created_at"]

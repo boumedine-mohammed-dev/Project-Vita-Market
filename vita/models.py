@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
+from django.conf import settings
 
 # =========================
 # Custom User
@@ -208,7 +209,8 @@ class Commande(models.Model):
 
     adresse_livraison = models.TextField()
     numero_suivi = models.CharField(max_length=100, blank=True, null=True)
-
+    is_deleted_by_client = models.BooleanField(default=False)
+    is_deleted_by_vendor = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -220,6 +222,19 @@ class Commande(models.Model):
 # Ligne Commande
 # =========================
 class LigneCommande(models.Model):
+    class Statut(models.TextChoices):
+        EN_ATTENTE = "en_attente"
+        CONFIRMEE = "confirmee"
+        EXPEDIEE = "expediee"
+        LIVREE = "livree"
+        ANNULEE = "annulee"
+
+    statut = models.CharField(
+        max_length=20,
+        choices=Statut.choices,
+        default=Statut.EN_ATTENTE
+    )
+    is_deleted_by_vendor = models.BooleanField(default=False)
     id_commande = models.ForeignKey(
         Commande,
         on_delete=models.CASCADE,
@@ -281,3 +296,13 @@ class Favori(models.Model):
 
     def __str__(self):
         return f"Favori: {self.user} → {self.id_produit}"
+
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
+    titre = models.CharField(max_length=255)
+    message = models.TextField()
+    lu = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.titre
