@@ -148,7 +148,7 @@ export default function AuthPage() {
                     <div className="mt-8 px-2 text-center">
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             Vous avez déjà un compte?{' '}
-                            <a className="text-[#81e240] font-bold hover:underline ml-1" href="#">Connectez-vous ici</a>
+                            <button className="text-[#81e240] font-bold hover:underline ml-1 cursor-pointer" onClick={() => setActiveTab('login')}>Connectez-vous ici</button>
                         </p>
                     </div>
                 </form>
@@ -203,7 +203,7 @@ export default function AuthPage() {
                     <div className="mt-8 px-2 text-center">
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             Vous n'avez pas de compte?{' '}
-                            <a className="text-[#81e240] font-bold hover:underline ml-1" href="#">Inscrivez-vous ici</a>
+                            <button className="text-[#81e240] font-bold hover:underline ml-1 cursor-pointer" onClick={() => setActiveTab('register')}>Inscrivez-vous ici</button>
                         </p>
                     </div>
                 </form>
@@ -227,11 +227,11 @@ export default function AuthPage() {
                             <div className="size-8 flex items-center justify-center text-[#81e240]">
                                 <span className="material-symbols-outlined text-3xl">eco</span>
                             </div>
-                            <h2 className="text-xl font-bold leading-tight tracking-tight">EcoVibe</h2>
+                            <h2 onClick={() => router.push("/")} className="cursor-pointer text-xl font-bold leading-tight tracking-tight">Vita Market</h2>
                         </div>
                         <button className="flex items-center justify-center rounded-lg h-10 bg-primary/10 text-slate-900 dark:text-slate-100 gap-2 text-sm font-bold px-4 hover:bg-primary/20 transition-colors">
                             <span className="material-symbols-outlined text-primary">energy_savings_leaf</span>
-                            <span className="hidden sm:inline">Sustainability First</span>
+                            <span className="hidden sm:inline">Bien manger, c'est facile</span>
                         </button>
                     </header>
 

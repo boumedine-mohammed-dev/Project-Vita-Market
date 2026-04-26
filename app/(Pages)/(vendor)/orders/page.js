@@ -49,6 +49,12 @@ const patchLignes = async (lignes, newStatus) => {
     )
 }
 
+const TERMINAL_STATUTS = ['annulee', 'livree', 'collectee']
+const isTerminalOrder = (order) => {
+    const s = getOrderStatut(order)
+    return TERMINAL_STATUTS.includes(s)
+}
+
 const fmt = (n) => parseFloat(n ?? 0).toLocaleString('fr-DZ')
 
 // ─── Mini avatar ──────────────────────────────────────────────────────────────
@@ -82,13 +88,22 @@ function StatusBadge({ statut }) {
     )
 }
 
-// ─── Status change dropdown ───────────────────────────────────────────────────
-function StatusDropdown({ order, onUpdated, onClose }) {
+// ─── Status change + delete dropdown ────────────────────────────────────────
+function OrderMenu({ order, onUpdated, onDeleted, onClose }) {
     const [loading, setLoading] = useState(false)
+    const [deleting, setDeleting] = useState(false)
     const currentStatut = getOrderStatut(order)
+    const canDelete = isTerminalOrder(order)
+    const isCancelled = currentStatut === 'annulee'
 
     const handleChange = async (newStatus) => {
         if (newStatus === currentStatut) { onClose(); return }
+
+        // Confirm before cancelling
+        if (newStatus === 'annulee') {
+            if (!confirm('Êtes-vous sûr de vouloir annuler cette commande ? Le stock sera restauré et cette action est irréversible.')) return
+        }
+
         setLoading(true)
         try {
             await patchLignes(order.lignes, newStatus)
@@ -98,29 +113,79 @@ function StatusDropdown({ order, onUpdated, onClose }) {
         finally { setLoading(false) }
     }
 
+    const handleDelete = async () => {
+        if (!confirm('Masquer cette commande de votre tableau de bord ?')) return
+        setDeleting(true)
+        try {
+            const res = await fetch(`http://localhost:8000/commandes/${order.id}/delete_for_vendor/`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+            })
+            if (!res.ok) {
+                const data = await res.json()
+                alert(data.error ?? 'Erreur')
+                return
+            }
+            onDeleted(order.id)
+            onClose()
+        } catch (e) { console.error(e) }
+        finally { setDeleting(false) }
+    }
+
     return (
-        <div className="absolute right-0 top-9 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl w-52 overflow-hidden">
-            <p className="px-4 pt-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                {loading ? 'Mise à jour...' : 'Changer le statut'}
-            </p>
-            <div className="p-1 pb-2">
-                {ALL_STATUSES.map((s) => {
-                    const cfg = getStatus(s)
-                    const isCurrent = s === currentStatut
-                    return (
-                        <button key={s} onClick={() => handleChange(s)} disabled={loading || isCurrent}
-                            className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors
-                                ${isCurrent ? 'bg-slate-50 dark:bg-slate-800 cursor-default' : 'hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer'}
-                                disabled:opacity-60`}>
-                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${cfg.color}`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                                {cfg.label}
-                            </span>
-                            {isCurrent && <span className="material-symbols-outlined text-primary text-sm">check</span>}
+        <div className="absolute right-0 top-9 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl w-56 overflow-hidden">
+            {isCancelled ? (
+                /* ── Locked state: order is already cancelled ── */
+                <div className="p-4 flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-red-500">
+                        <span className="material-symbols-outlined text-base">block</span>
+                        <p className="text-xs font-bold">Commande annulée</p>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Le statut d&apos;une commande annulée ne peut plus être modifié.
+                    </p>
+                </div>
+            ) : (
+                <>
+                    <p className="px-4 pt-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                        {loading ? 'Mise à jour...' : 'Changer le statut'}
+                    </p>
+                    <div className="p-1">
+                        {ALL_STATUSES.map((s) => {
+                            const cfg = getStatus(s)
+                            const isCurrent = s === currentStatut
+                            return (
+                                <button key={s} onClick={() => handleChange(s)} disabled={loading || isCurrent}
+                                    className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors
+                                        ${isCurrent ? 'bg-slate-50 dark:bg-slate-800 cursor-default' : 'hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer'}
+                                        disabled:opacity-60`}>
+                                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${cfg.color}`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                                        {cfg.label}
+                                    </span>
+                                    {isCurrent && <span className="material-symbols-outlined text-primary text-sm">check</span>}
+                                </button>
+                            )
+                        })}
+                    </div>
+                </>
+            )}
+            {canDelete && (
+                <>
+                    <div className="mx-3 my-1 border-t border-slate-100 dark:border-slate-800" />
+                    <div className="p-1 pb-2">
+                        <button
+                            onClick={handleDelete}
+                            disabled={deleting}
+                            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors disabled:opacity-50"
+                        >
+                            <span className="material-symbols-outlined text-base">delete_outline</span>
+                            {deleting ? 'Suppression...' : 'Masquer la commande'}
                         </button>
-                    )
-                })}
-            </div>
+                    </div>
+                </>
+            )}
         </div>
     )
 }
@@ -383,6 +448,11 @@ export default function OrderManagement() {
         setSelectedOrder((prev) => prev ? patch(prev) : prev)
     }
 
+    const handleOrderDeleted = (id) => {
+        setOrders((prev) => prev.filter(o => o.id !== id))
+        setSelectedOrder((prev) => (prev?.id === id ? null : prev))
+    }
+
     const tabCounts = TABS.reduce((acc, tab) => {
         const filter = TAB_FILTERS[tab]
         acc[tab] = filter
@@ -615,9 +685,10 @@ export default function OrderManagement() {
                                                                 more_vert
                                                             </button>
                                                             {openMenuId === order.id && (
-                                                                <StatusDropdown
+                                                                <OrderMenu
                                                                     order={order}
                                                                     onUpdated={handleStatusUpdated}
+                                                                    onDeleted={handleOrderDeleted}
                                                                     onClose={() => setOpenMenuId(null)}
                                                                 />
                                                             )}

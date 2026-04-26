@@ -431,32 +431,7 @@ export default function CheckoutPage() {
                 </div>
             </main>
 
-            <footer className="mt-20 border-t border-slate-200 dark:border-slate-800 py-12 px-6 bg-white dark:bg-slate-950">
-                <div className="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-                    <div>
-                        <h4 className="font-extrabold text-slate-900 dark:text-white mb-4">VitaMarket</h4>
-                        <p className="text-sm text-slate-500 max-w-xs mx-auto md:mx-0">
-                            Rapprocher producteurs locaux et consommateurs responsables.
-                        </p>
-                    </div>
-                    <div>
-                        <h4 className="font-extrabold text-slate-900 dark:text-white mb-4">Liens utiles</h4>
-                        <ul className="text-sm text-slate-500 space-y-2">
-                            <li><a className="hover:text-primary" href="#">Politique de livraison</a></li>
-                            <li><a className="hover:text-primary" href="#">Retours et remboursements</a></li>
-                            <li><a className="hover:text-primary" href="#">Centre d'aide</a></li>
-                        </ul>
-                    </div>
-                    <div className="flex flex-col items-center md:items-end">
-                        <div className="flex gap-4 mb-4">
-                            <span className="material-symbols-outlined p-2 rounded-full bg-primary/10 text-primary">eco</span>
-                            <span className="material-symbols-outlined p-2 rounded-full bg-primary/10 text-primary">compost</span>
-                            <span className="material-symbols-outlined p-2 rounded-full bg-primary/10 text-primary">recycling</span>
-                        </div>
-                        <p className="text-xs text-slate-400">© 2024 VitaMarket. Tous droits réservés.</p>
-                    </div>
-                </div>
-            </footer>
+
         </div>
     );
 }

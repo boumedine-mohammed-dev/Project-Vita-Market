@@ -33,11 +33,12 @@ const STEPS = [
     { key: 'collectee', label: 'Collectée' },
 ]
 
-const isCancelled = (s) => s === 'annulee'
-const isTerminal = (s) => s === 'livree' || s === 'collectee' || s === 'annulee'
-const isDeletable = (s) => s === 'annulee' || s === 'collectee'
-const isActive = (s) => !isTerminal(s) && s !== undefined
-const isReviewable = (s) => s === 'livree' || s === 'collectee'
+// helpers that operate on the array of lignes (no global commande.statut)
+const allLignesCancelled = (lignes) => lignes?.length > 0 && lignes.every(l => l.statut === 'annulee')
+const someLigneActive = (lignes) => lignes?.some(l => !['collectee', 'annulee'].includes(l.statut))
+const allLignesTerminal = (lignes) => lignes?.every(l => ['collectee', 'annulee'].includes(l.statut))
+const anyLigneReviewable = (lignes) => lignes?.some(l => ['collectee'].includes(l.statut))
+const isDeletable = (lignes) => allLignesCancelled(lignes) || lignes?.every(l => ['collectee', 'annulee'].includes(l.statut))
 
 const fmt = (n) => parseFloat(n ?? 0).toLocaleString('fr-DZ')
 
@@ -181,18 +182,20 @@ function ReviewModal({ ligne, onClose, onSaved }) {
     )
 }
 
-// ─── Progress Bar ─────────────────────────────────────────────────────────────
+// ─── Progress Bar (per-line / per-vendor) ─────────────────────────────────────
 function OrderProgressBar({ statut }) {
+    if (statut === 'annulee') return null
     const currentStep = statusStepMap[statut] ?? 0
-    const total = STEPS.length
+    const steps = STEPS.filter(s => s.key !== 'collectee') // hide collectee from progress
+    const total = steps.length
     return (
-        <div className="py-4">
-            <div className="relative flex items-center justify-between mb-3">
+        <div className="py-3">
+            <div className="relative flex items-center justify-between mb-2">
                 <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-slate-100 dark:bg-slate-800 rounded-full" />
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary transition-all duration-500 rounded-full"
                     style={{ width: `${(currentStep / (total - 1)) * 100}%` }} />
-                {STEPS.map((step, i) => (
-                    <div key={step.key} className={`relative z-10 size-4 rounded-full flex-shrink-0 transition-all
+                {steps.map((step, i) => (
+                    <div key={step.key} className={`relative z-10 size-3.5 rounded-full flex-shrink-0 transition-all
                         ${i < currentStep ? 'bg-primary' : ''}
                         ${i === currentStep ? 'bg-primary ring-4 ring-primary/20' : ''}
                         ${i > currentStep ? 'bg-slate-200 dark:bg-slate-700' : ''}`}
@@ -200,10 +203,10 @@ function OrderProgressBar({ statut }) {
                 ))}
             </div>
             <div className="flex justify-between">
-                {STEPS.map((step, i) => (
-                    <span key={step.key} className={`text-[10px] font-bold uppercase tracking-wide flex-1 transition-colors
+                {steps.map((step, i) => (
+                    <span key={step.key} className={`text-[9px] font-bold uppercase tracking-wide flex-1 transition-colors
                         ${i === currentStep ? 'text-primary' : i < currentStep ? 'text-slate-400' : 'text-slate-300 dark:text-slate-600'}
-                        ${i === 0 ? 'text-left' : i === STEPS.length - 1 ? 'text-right' : 'text-center'}`}>
+                        ${i === 0 ? 'text-left' : i === steps.length - 1 ? 'text-right' : 'text-center'}`}>
                         {step.label}
                     </span>
                 ))}
@@ -280,7 +283,12 @@ function OrderActionsMenu({ commande, onCancel, onDelete, onClose }) {
     const [cancelling, setCancelling] = useState(false)
     const [deleting, setDeleting] = useState(false)
 
+    // Cancellable if at least one line is not yet shipped/delivered
+    const canCancel = commande.lignes?.some(l => ['en_attente', 'confirmee', 'en_preparation'].includes(l.statut))
+    const canDelete = isDeletable(commande.lignes)
+
     const handleCancel = async () => {
+        if (!confirm('Êtes-vous sûr de vouloir annuler cette commande ? Cette action est irréversible.')) return
         setCancelling(true)
         try {
             await fetch(`http://localhost:8000/commandes/${commande.id}/cancel/`, {
@@ -296,7 +304,7 @@ function OrderActionsMenu({ commande, onCancel, onDelete, onClose }) {
         if (!confirm('Supprimer définitivement cette commande ?')) return
         setDeleting(true)
         try {
-            const res = await fetch(`http://localhost:8000/commandes/${commande.id}/delete_for_client/`, {
+            await fetch(`http://localhost:8000/commandes/${commande.id}/delete_for_client/`, {
                 method: 'PATCH',
                 credentials: 'include',
             })
@@ -367,8 +375,8 @@ function OrderActionsMenu({ commande, onCancel, onDelete, onClose }) {
                     Voir la facture
                 </button>
 
-                {/* Cancel — only en_attente */}
-                {commande.statut === 'en_attente' && (
+                {/* Cancel — only if at least one line is en_attente */}
+                {canCancel && (
                     <button onClick={handleCancel} disabled={cancelling}
                         className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-sm font-medium text-red-500 transition-colors disabled:opacity-60">
                         <span className="material-symbols-outlined text-base">cancel</span>
@@ -376,8 +384,8 @@ function OrderActionsMenu({ commande, onCancel, onDelete, onClose }) {
                     </button>
                 )}
 
-                {/* Delete — only annulee or collectee */}
-                {isDeletable(commande.statut) && (
+                {/* Delete — only when all lines are terminal */}
+                {canDelete && (
                     <button onClick={handleDelete} disabled={deleting}
                         className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-sm font-medium text-red-500 transition-colors disabled:opacity-60">
                         <span className="material-symbols-outlined text-base">delete_outline</span>
@@ -390,11 +398,125 @@ function OrderActionsMenu({ commande, onCancel, onDelete, onClose }) {
 }
 
 // ─── Order Detail View ────────────────────────────────────────────────────────
+// Groups lines by vendor so we can show per-vendor status + tracking
+function groupByVendeur(lignes = []) {
+    const map = new Map()
+    for (const ligne of lignes) {
+        const key = ligne.produit_vendeur
+        if (!map.has(key)) map.set(key, { vendeur: key, boutique: ligne.vendeur_boutique ?? key, lignes: [] })
+        map.get(key).lignes.push(ligne)
+    }
+    return [...map.values()]
+}
+
+function VendeurBlock({ group, canReview, reviewedIds, onReview }) {
+    const [showSuivi, setShowSuivi] = useState(false)
+    // representative status: use worst-case (lowest step)
+    const statut = group.lignes.reduce((acc, l) => {
+        const s = statusStepMap[l.statut] ?? 0
+        return s < (statusStepMap[acc] ?? 0) ? l.statut : acc
+    }, group.lignes[0]?.statut ?? 'en_attente')
+
+    const cfg = getStatusCfg(statut)
+    const trackingNumber = group.lignes.find(l => l.numero_suivi)?.numero_suivi
+    const allCancelled = group.lignes.every(l => l.statut === 'annulee')
+
+    return (
+        <div className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden mb-4 last:mb-0">
+            {/* Vendor header */}
+            <div className="px-5 py-3 bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-base text-slate-400">storefront</span>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">{group.boutique || group.vendeur}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-lg ${cfg.color}`}>{cfg.label}</span>
+                    {!allCancelled && (
+                        <button
+                            onClick={() => setShowSuivi(s => !s)}
+                            className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-xs">local_shipping</span>
+                            Suivi colis
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* Suivi / tracking panel */}
+            {showSuivi && (
+                <div className="px-5 pb-4 bg-slate-50/50 dark:bg-slate-800/30 border-b border-slate-100 dark:border-slate-800">
+                    {allCancelled ? (
+                        <div className="flex items-center gap-2 py-3 text-red-500 text-xs font-medium">
+                            <span className="material-symbols-outlined text-sm">cancel</span>
+                            Cette partie de commande a été annulée.
+                        </div>
+                    ) : (
+                        <>
+                            <OrderProgressBar statut={statut} />
+                            {trackingNumber && (
+                                <div className="flex items-center gap-2 mt-2">
+                                    <span className="material-symbols-outlined text-xs text-slate-400">pin</span>
+                                    <span className="text-xs text-slate-500">N° de suivi : </span>
+                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 font-mono">{trackingNumber}</span>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+            )}
+
+            {/* Line items */}
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {group.lignes.map((ligne) => {
+                    const reviewed = reviewedIds.has(ligne.id)
+                    const lineReviewable = ['collectee'].includes(ligne.statut)
+                    return (
+                        <div key={ligne.id} className="p-5 flex gap-4 items-center">
+                            <div className="size-14 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 border border-slate-200 dark:border-slate-700">
+                                <img src={ligne.produit_url} alt={ligne.produit_nom}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => { e.target.src = 'https://via.placeholder.com/56?text=?' }} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{ligne.produit_nom}</p>
+                                <p className="text-xs text-slate-500">Qté : {ligne.quantite} × {fmt(ligne.prix_unitaire)} دج</p>
+                            </div>
+                            <div className="flex flex-col items-end gap-2 shrink-0">
+                                <p className="text-sm font-black text-slate-900 dark:text-slate-100">
+                                    {fmt(parseFloat(ligne.prix_unitaire) * ligne.quantite)} دج
+                                </p>
+                                {lineReviewable && canReview && (
+                                    reviewed ? (
+                                        <span className="flex items-center gap-1 text-[10px] font-bold text-primary">
+                                            <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                                            Avis publié
+                                        </span>
+                                    ) : (
+                                        <button
+                                            onClick={() => onReview(ligne)}
+                                            className="flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-2 py-1 rounded-lg hover:bg-amber-100 transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-xs">star</span>
+                                            Donner un avis
+                                        </button>
+                                    )
+                                )}
+                            </div>
+                        </div>
+                    )
+                })}
+            </div>
+        </div>
+    )
+}
+
 function OrderDetail({ commande, onBack }) {
-    const cfg = getStatusCfg(commande.statut)
-    const canReview = isReviewable(commande.statut)
-    const [reviewTarget, setReviewTarget] = useState(null) // ligne being reviewed
+    const canReview = anyLigneReviewable(commande.lignes)
+    const allCancelledGlobal = allLignesCancelled(commande.lignes)
+    const [reviewTarget, setReviewTarget] = useState(null)
     const [reviewedIds, setReviewedIds] = useState(new Set())
+    const groups = groupByVendeur(commande.lignes)
 
     return (
         <section className="grid grid-cols-1 gap-6">
@@ -413,12 +535,12 @@ function OrderDetail({ commande, onBack }) {
                 Retour aux commandes
             </button>
 
-            {/* Header */}
+            {/* Header — no global status badge */}
             <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm overflow-hidden border border-slate-100 dark:border-slate-800">
-                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between md:items-center gap-4">
+                <div className="p-6 flex flex-col md:flex-row justify-between md:items-center gap-4">
                     <div className="flex items-center gap-4">
-                        <div className={`size-12 rounded-lg flex items-center justify-center ${cfg.color}`}>
-                            <span className="material-symbols-outlined text-2xl">{cfg.icon}</span>
+                        <div className="size-12 rounded-lg flex items-center justify-center bg-primary/10">
+                            <span className="material-symbols-outlined text-2xl text-primary">receipt_long</span>
                         </div>
                         <div>
                             <p className="text-sm font-bold">Commande #{commande.numero_commande}</p>
@@ -429,23 +551,15 @@ function OrderDetail({ commande, onBack }) {
                             </p>
                         </div>
                     </div>
-                    <span className={`text-xs font-bold uppercase px-3 py-1.5 rounded-lg ${cfg.color}`}>{cfg.label}</span>
-                </div>
-                <div className="px-6">
-                    {isCancelled(commande.statut) ? (
-                        <div className="py-4">
-                            <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-100 dark:border-red-900">
-                                <span className="material-symbols-outlined text-red-500">info</span>
-                                <p className="text-sm font-medium text-red-600 dark:text-red-400">Cette commande a été annulée.</p>
-                            </div>
-                        </div>
-                    ) : (
-                        <OrderProgressBar statut={commande.statut} />
+                    {allCancelledGlobal && (
+                        <span className="text-xs font-bold uppercase px-3 py-1.5 rounded-lg text-red-500 bg-red-50 dark:bg-red-950/30 w-fit">
+                            Entièrement annulée
+                        </span>
                     )}
                 </div>
             </div>
 
-            {/* Items — with review button */}
+            {/* Per-vendor blocks */}
             <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm overflow-hidden border border-slate-100 dark:border-slate-800">
                 <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                     <p className="text-sm font-bold">Articles commandés</p>
@@ -456,45 +570,16 @@ function OrderDetail({ commande, onBack }) {
                         </span>
                     )}
                 </div>
-                <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {commande.lignes?.map((ligne) => {
-                        const reviewed = reviewedIds.has(ligne.id)
-                        return (
-                            <div key={ligne.id} className="p-6 flex gap-4 items-center">
-                                <div className="size-16 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 border border-slate-200 dark:border-slate-700">
-                                    <img src={ligne.produit_url} alt={ligne.produit_nom}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => { e.target.src = 'https://via.placeholder.com/64?text=?' }} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{ligne.produit_nom}</p>
-                                    <p className="text-xs text-slate-500 mt-0.5">Vendeur : {ligne.produit_vendeur}</p>
-                                    <p className="text-xs text-slate-500">Qté : {ligne.quantite} × {fmt(ligne.prix_unitaire)} دج</p>
-                                </div>
-                                <div className="flex flex-col items-end gap-2 shrink-0">
-                                    <p className="text-sm font-black text-slate-900 dark:text-slate-100">
-                                        {fmt(parseFloat(ligne.prix_unitaire) * ligne.quantite)} دج
-                                    </p>
-                                    {canReview && (
-                                        reviewed ? (
-                                            <span className="flex items-center gap-1 text-[10px] font-bold text-primary">
-                                                <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                                                Avis publié
-                                            </span>
-                                        ) : (
-                                            <button
-                                                onClick={() => setReviewTarget(ligne)}
-                                                className="flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-2 py-1 rounded-lg hover:bg-amber-100 transition-colors"
-                                            >
-                                                <span className="material-symbols-outlined text-xs">star</span>
-                                                Donner un avis
-                                            </button>
-                                        )
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    })}
+                <div className="p-4">
+                    {groups.map(group => (
+                        <VendeurBlock
+                            key={group.vendeur}
+                            group={group}
+                            canReview={canReview}
+                            reviewedIds={reviewedIds}
+                            onReview={setReviewTarget}
+                        />
+                    ))}
                 </div>
             </div>
 
@@ -583,7 +668,11 @@ export default function ProfilePage() {
     }, [])
 
     const handleCancelOrder = (id) =>
-        setCommandes((prev) => prev.map((c) => c.id === id ? { ...c, statut: 'annulee' } : c))
+        setCommandes((prev) => prev.map((c) =>
+            c.id === id
+                ? { ...c, lignes: c.lignes?.map(l => ({ ...l, statut: 'annulee' })) }
+                : c
+        ))
 
     const handleDeleteOrder = (id) => {
         setCommandes((prev) => prev.filter((c) => c.id !== id))
@@ -713,18 +802,28 @@ export default function ProfilePage() {
                                         <p className="text-sm font-medium">Aucune commande pour l'instant.</p>
                                     </div>
                                 ) : displayedCommandes.map((commande) => {
-                                    const cfg = getStatusCfg(commande.statut)
-                                    const active = isActive(commande.statut)
-                                    const terminal = isTerminal(commande.statut)
+                                    // Derive display info from lines (no global statut)
+                                    const allCancelled = allLignesCancelled(commande.lignes)
+                                    const hasActive = someLigneActive(commande.lignes)
+                                    const allTerminal = allLignesTerminal(commande.lignes)
 
                                     return (
                                         <div key={commande.id}
-                                            className={`bg-white dark:bg-slate-900 rounded-xl shadow-sm overflow-visible border border-slate-100 dark:border-slate-800 transition-opacity ${terminal ? 'opacity-75' : ''}`}>
+                                            className={`bg-white dark:bg-slate-900 rounded-xl shadow-sm overflow-visible border border-slate-100 dark:border-slate-800 transition-opacity ${allTerminal ? 'opacity-80' : ''}`}>
 
+                                            {/* ── Card header — no global status badge ── */}
                                             <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between md:items-center gap-4">
                                                 <div className="flex items-center gap-4">
-                                                    <div className={`size-12 rounded-lg flex items-center justify-center ${cfg.color}`}>
-                                                        <span className="material-symbols-outlined text-2xl">{cfg.icon}</span>
+                                                    <div className={`size-12 rounded-lg flex items-center justify-center ${allCancelled ? 'bg-red-50 dark:bg-red-950/30' :
+                                                        allTerminal ? 'bg-primary/10' :
+                                                            'bg-amber-50 dark:bg-amber-950/30'
+                                                        }`}>
+                                                        <span className={`material-symbols-outlined text-2xl ${allCancelled ? 'text-red-400' :
+                                                            allTerminal ? 'text-primary' :
+                                                                'text-amber-500'
+                                                            }`}>
+                                                            {allCancelled ? 'cancel' : allTerminal ? 'check_circle' : 'pending'}
+                                                        </span>
                                                     </div>
                                                     <div>
                                                         <button onClick={() => setSelectedOrder(commande)}
@@ -738,32 +837,37 @@ export default function ProfilePage() {
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <span className={`text-xs font-bold uppercase px-3 py-1.5 rounded-lg ${cfg.color} w-fit`}>{cfg.label}</span>
+                                                {/* Minimal summary tag */}
+                                                <span className={`text-xs font-bold uppercase px-3 py-1.5 rounded-lg w-fit ${allCancelled ? 'text-red-500 bg-red-50 dark:bg-red-950/30' :
+                                                    allTerminal ? 'text-primary bg-primary/10' :
+                                                        'text-amber-600 bg-amber-50 dark:bg-amber-950/30'
+                                                    }`}>
+                                                    {allCancelled ? 'Annulée' : allTerminal ? 'Terminée' : 'En cours'}
+                                                </span>
                                             </div>
 
-                                            {active && (
-                                                <div className="px-6">
-                                                    <OrderProgressBar statut={commande.statut} />
-                                                    <div className="pb-6 flex gap-3">
-                                                        <button onClick={() => setSelectedOrder(commande)}
-                                                            className="flex-1 bg-primary text-slate-900 font-bold py-2.5 rounded-xl text-sm hover:brightness-105 transition-all">
-                                                            Voir les détails
+                                            {/* ── Active orders: show details button ── */}
+                                            {hasActive && (
+                                                <div className="px-6 pb-6 pt-4 flex gap-3">
+                                                    <button onClick={() => setSelectedOrder(commande)}
+                                                        className="flex-1 bg-primary text-slate-900 font-bold py-2.5 rounded-xl text-sm hover:brightness-105 transition-all">
+                                                        Voir les détails
+                                                    </button>
+                                                    <div className="relative" onClick={(e) => e.stopPropagation()}>
+                                                        <button
+                                                            onClick={() => setOpenMenuId(openMenuId === commande.id ? null : commande.id)}
+                                                            className="px-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all h-full">
+                                                            <span className="material-symbols-outlined text-slate-500">more_horiz</span>
                                                         </button>
-                                                        <div className="relative" onClick={(e) => e.stopPropagation()}>
-                                                            <button
-                                                                onClick={() => setOpenMenuId(openMenuId === commande.id ? null : commande.id)}
-                                                                className="px-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all h-full">
-                                                                <span className="material-symbols-outlined text-slate-500">more_horiz</span>
-                                                            </button>
-                                                            {openMenuId === commande.id && (
-                                                                <OrderActionsMenu commande={commande} onCancel={handleCancelOrder} onDelete={handleDeleteOrder} onClose={() => setOpenMenuId(null)} />
-                                                            )}
-                                                        </div>
+                                                        {openMenuId === commande.id && (
+                                                            <OrderActionsMenu commande={commande} onCancel={handleCancelOrder} onDelete={handleDeleteOrder} onClose={() => setOpenMenuId(null)} />
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
 
-                                            {terminal && (
+                                            {/* ── Terminal / cancelled orders ── */}
+                                            {allTerminal && (
                                                 <div className="p-6 flex flex-col md:flex-row justify-between md:items-center gap-4">
                                                     <div className="flex items-center gap-2">
                                                         {commande.lignes?.slice(0, 4).map((ligne) => (
@@ -865,20 +969,6 @@ export default function ProfilePage() {
                     </div>
                 </main>
 
-                <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-10 px-6 lg:px-40 mt-12">
-                    <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-                        <div className="flex items-center gap-3 text-primary">
-                            <span className="material-symbols-outlined">eco</span>
-                            <span className="font-bold tracking-tight text-slate-900 dark:text-slate-100">VitaMarket</span>
-                        </div>
-                        <div className="flex gap-8 text-xs font-semibold text-slate-500">
-                            {['Confidentialité', 'CGU', 'Support'].map((l) => (
-                                <a key={l} className="hover:text-primary transition-colors" href="#">{l}</a>
-                            ))}
-                        </div>
-                        <div className="text-xs text-slate-400">© 2024 VitaMarket. Tous droits réservés.</div>
-                    </div>
-                </footer>
             </div>
         </>
     )

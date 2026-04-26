@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { useAuthStore } from "./Store/useAuthStore";
 import { useEffect } from "react";
-
+import { useRouter } from "next/navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,9 +18,19 @@ const geistMono = Geist_Mono({
 
 
 export default function RootLayout({ children }) {
-  const { checkAuth } = useAuthStore();
+  const router = useRouter();
+  const { checkAuth, user } = useAuthStore();
   useEffect(() => {
     checkAuth();
+    if (user) {
+      if (user.role === "client") {
+        router.push("/");
+      } else if (user.role === "vendor") {
+        router.push("/dashboard");
+      } else {
+        router.push("/login");
+      }
+    }
   }, []);
   return (
     <html lang="en">

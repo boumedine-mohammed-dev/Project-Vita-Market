@@ -223,25 +223,7 @@ export default function CartPage() {
                 </div>
             </main>
 
-            <footer className="mt-20 border-t border-primary/10 bg-white dark:bg-slate-950 py-12">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <div className="flex justify-center gap-2 mb-4">
-                        <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
-                            <span className="material-symbols-outlined text-primary text-sm">eco</span>
-                        </div>
-                        <span className="text-lg font-bold tracking-tight">VitaMarket</span>
-                    </div>
-                    <p className="text-sm text-slate-500 max-w-md mx-auto mb-8">
-                        Connecting local producers with conscious consumers.
-                    </p>
-                    <div className="flex justify-center gap-6 text-xs font-bold uppercase tracking-widest text-slate-400">
-                        {["Confidentialité", "CGU", "Retours", "Contact"].map((l) => (
-                            <a key={l} className="hover:text-primary" href="#">{l}</a>
-                        ))}
-                    </div>
-                    <p className="mt-8 text-xs text-slate-500">© 2024 VitaMarket. Tous droits réservés.</p>
-                </div>
-            </footer>
+
         </div>
     );
 }

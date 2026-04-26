@@ -27,6 +27,9 @@ const NEXT_STATUS = {
     livree: 'collectee',
 }
 
+const TERMINAL_STATUTS = ['annulee', 'livree', 'collectee']
+const isTerminalOrder = (order) => TERMINAL_STATUTS.includes(order.lignes?.[0]?.statut ?? order.statut)
+
 const patchLignes = (lignes, newStatus) =>
     Promise.all(lignes.map((l) =>
         fetch(`http://localhost:8000/lignes/${l.id}/`, {
@@ -66,13 +69,22 @@ function StatusBadge({ statut }) {
     )
 }
 
-// ─── Status dropdown ──────────────────────────────────────────────────────────
-function StatusDropdown({ order, onUpdated, onClose }) {
+// ─── Order menu (status + cancel lock + soft-delete) ─────────────────────────
+function OrderMenu({ order, onUpdated, onDeleted, onClose }) {
     const [loading, setLoading] = useState(false)
+    const [deleting, setDeleting] = useState(false)
     const statuses = Object.keys(statusConfig)
+    const currentStatut = order.lignes?.[0]?.statut ?? order.statut
+    const isCancelled = currentStatut === 'annulee'
+    const canDelete = isTerminalOrder(order)
 
     const handleChange = async (newStatus) => {
-        if (newStatus === order.lignes?.[0]?.statut) { onClose(); return }
+        if (newStatus === currentStatut) { onClose(); return }
+
+        if (newStatus === 'annulee') {
+            if (!confirm('Êtes-vous sûr de vouloir annuler cette commande ? Le stock sera restauré et cette action est irréversible.')) return
+        }
+
         setLoading(true)
         try {
             await patchLignes(order.lignes, newStatus)
@@ -81,36 +93,76 @@ function StatusDropdown({ order, onUpdated, onClose }) {
         finally { setLoading(false) }
     }
 
-    const currentStatut = order.lignes?.[0]?.statut ?? order.statut
+    const handleDelete = async () => {
+        if (!confirm('Masquer cette commande de votre tableau de bord ?')) return
+        setDeleting(true)
+        try {
+            const res = await fetch(`http://localhost:8000/commandes/${order.id}/delete_for_vendor/`, {
+                method: 'PATCH', credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+            })
+            if (!res.ok) {
+                const data = await res.json()
+                alert(data.error ?? 'Erreur')
+                return
+            }
+            onDeleted(order.id); onClose()
+        } catch (e) { console.error(e) }
+        finally { setDeleting(false) }
+    }
 
     return (
-        <div className="absolute right-0 top-8 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl w-52 overflow-hidden">
-            <p className="px-4 pt-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                {loading ? 'Mise à jour...' : 'Changer le statut'}
-            </p>
-            <div className="p-1">
-                {statuses.map((s) => {
-                    const cfg = getStatusCfg(s)
-                    const isCurrent = s === currentStatut
-                    return (
-                        <button key={s} onClick={() => handleChange(s)} disabled={loading || isCurrent}
-                            className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50
-                                ${isCurrent ? 'bg-slate-50 dark:bg-slate-800 cursor-default' : 'hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer'}`}>
-                            <StatusBadge statut={s} />
-                            {isCurrent && <span className="material-symbols-outlined text-primary text-sm">check</span>}
+        <div className="absolute right-0 top-8 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl w-56 overflow-hidden">
+            {isCancelled ? (
+                /* ── Locked: already cancelled ── */
+                <div className="p-4 flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-red-500">
+                        <span className="material-symbols-outlined text-base">block</span>
+                        <p className="text-xs font-bold">Commande annulée</p>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                        Le statut d&apos;une commande annulée ne peut plus être modifié.
+                    </p>
+                </div>
+            ) : (
+                <>
+                    <p className="px-4 pt-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                        {loading ? 'Mise à jour…' : 'Changer le statut'}
+                    </p>
+                    <div className="p-1">
+                        {statuses.map((s) => {
+                            const isCurrent = s === currentStatut
+                            return (
+                                <button key={s} onClick={() => handleChange(s)} disabled={loading || isCurrent}
+                                    className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50
+                                        ${isCurrent ? 'bg-slate-50 dark:bg-slate-800 cursor-default' : 'hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer'}`}>
+                                    <StatusBadge statut={s} />
+                                    {isCurrent && <span className="material-symbols-outlined text-primary text-sm">check</span>}
+                                </button>
+                            )
+                        })}
+                    </div>
+                </>
+            )}
+            {canDelete && (
+                <>
+                    <div className="mx-3 my-1 border-t border-slate-100 dark:border-slate-800" />
+                    <div className="p-1 pb-2">
+                        <button
+                            onClick={handleDelete}
+                            disabled={deleting}
+                            className="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors disabled:opacity-50"
+                        >
+                            <span className="material-symbols-outlined text-base">delete_outline</span>
+                            {deleting ? 'Suppression…' : 'Masquer la commande'}
                         </button>
-                    )
-                })}
-                <button onClick={() => handleChange('supprimee')} disabled={loading || currentStatut === 'supprimee'}
-                    className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50
-                        ${currentStatut === 'supprimee' ? 'bg-slate-50 dark:bg-slate-800 cursor-default' : 'hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer'}`}>
-                    <StatusBadge statut={'supprimee'} />
-                    {currentStatut === 'supprimee' && <span className="material-symbols-outlined text-primary text-sm">check</span>}
-                </button>
-            </div>
+                    </div>
+                </>
+            )}
         </div>
     )
 }
+
 
 // ─── Order Detail Modal ───────────────────────────────────────────────────────
 function OrderModal({ order, onClose, onStatusUpdated }) {
@@ -396,6 +448,11 @@ export default function VendorDashboardPage() {
         setSelectedOrder((prev) => prev ? patch(prev) : prev)
     }
 
+    const handleOrderDeleted = (id) => {
+        setRecentOrders((prev) => prev.filter(o => o.id !== id))
+        setSelectedOrder((prev) => (prev?.id === id ? null : prev))
+    }
+
     const chartConfig = {
         labels: chartData.map(d => {
             const date = new Date(d.date)
@@ -440,7 +497,7 @@ export default function VendorDashboardPage() {
     }
 
     const kpis = [
-        { label: 'Revenus totaux', value: `${parseFloat(stats?.total_revenue || 0).toLocaleString("fr-DZ")} دج`, icon: 'payments', color: 'bg-primary/10 text-primary' },
+        { label: 'Revenus totaux', value: `${parseFloat(stats?.revenue || 0).toLocaleString("fr-DZ")} دج`, icon: 'payments', color: 'bg-primary/10 text-primary' },
         { label: 'Total commandes', value: stats?.total_orders || 0, icon: 'shopping_bag', color: 'bg-primary/10 text-primary' },
         { label: 'En cours', value: stats?.pending_orders || 0, icon: 'pending_actions', color: 'bg-amber-500/10 text-amber-500' },
         { label: 'Produits au catalogue', value: stats?.total_products || 0, icon: 'inventory_2', color: 'bg-blue-500/10 text-blue-500' },
@@ -626,9 +683,10 @@ export default function VendorDashboardPage() {
                                                                     more_vert
                                                                 </button>
                                                                 {openMenuId === order.id && (
-                                                                    <StatusDropdown
+                                                                    <OrderMenu
                                                                         order={order}
                                                                         onUpdated={handleStatusUpdated}
+                                                                        onDeleted={handleOrderDeleted}
                                                                         onClose={() => setOpenMenuId(null)}
                                                                     />
                                                                 )}

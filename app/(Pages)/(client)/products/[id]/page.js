@@ -81,6 +81,12 @@ export default function ProductDetailsPage() {
     }, [id]);
 
     const toggleFavori = async () => {
+        const user = useAuthStore.getState().user;
+        if (!user) {
+            alert("Vous n'êtes pas authentifié");
+            return;
+        }
+
         if (favoriLoading) return;
         setFavoriLoading(true);
         setIsFavori((prev) => !prev); // optimistic
@@ -546,48 +552,7 @@ export default function ProductDetailsPage() {
                 </div >
             </main >
 
-            {/* Footer */}
-            < footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 md:px-10 lg:px-20 xl:px-40 py-12" >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-                    <div className="col-span-1">
-                        <div className="flex items-center gap-3 text-slate-900 dark:text-slate-100 mb-4">
-                            <span className="material-symbols-outlined text-primary text-2xl">eco</span>
-                            <h2 className="text-lg font-bold">VitaMarket</h2>
-                        </div>
-                        <p className="text-slate-500 text-sm leading-relaxed">
-                            Rapprocher les producteurs locaux des consommateurs responsables.
-                        </p>
-                    </div>
-                    {[
-                        { title: "Marché", links: ["Toutes les catégories", "Nouveautés", "Vendeurs vedettes"] },
-                        { title: "Support", links: ["Livraison", "Retours & Remboursements", "Contactez-nous"] },
-                    ].map(({ title, links }) => (
-                        <div key={title}>
-                            <h4 className="font-bold text-sm uppercase tracking-widest mb-4">{title}</h4>
-                            <ul className="space-y-2 text-sm text-slate-500">
-                                {links.map((l) => <li key={l}><a className="hover:text-primary transition-colors" href="#">{l}</a></li>)}
-                            </ul>
-                        </div>
-                    ))}
-                    <div>
-                        <h4 className="font-bold text-sm uppercase tracking-widest mb-4">Communauté</h4>
-                        <div className="flex gap-3">
-                            {["share", "public", "camera"].map((icon) => (
-                                <a key={icon} className="h-10 w-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-primary/10 hover:text-primary transition-colors" href="#">
-                                    <span className="material-symbols-outlined text-lg">{icon}</span>
-                                </a>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-                <div className="border-t border-slate-100 dark:border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p className="text-slate-400 text-xs">© 2024 VitaMarket. Tous droits réservés.</p>
-                    <div className="flex gap-6 text-xs text-slate-400">
-                        <a className="hover:text-primary" href="#">Confidentialité</a>
-                        <a className="hover:text-primary" href="#">CGU</a>
-                    </div>
-                </div>
-            </footer >
+
         </div >
     )
 }

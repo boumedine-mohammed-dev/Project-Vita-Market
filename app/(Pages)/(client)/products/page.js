@@ -167,6 +167,12 @@ export default function ProductsPage() {
     const handleClearAll = () => { handleCategoryChange(null); handlePriceReset(); setMinRatingFilter(null); setActiveTags([]); setSortOption("recommended"); };
 
     const toggleFavori = async (productId) => {
+        const user = useAuthStore.getState().user;
+        if (!user) {
+            alert("Vous n'êtes pas authentifié");
+            return;
+        }
+
         // Prevent double-click
         if (loadingFavori.has(productId)) return;
         setLoadingFavori((prev) => new Set(prev).add(productId));
@@ -279,17 +285,17 @@ export default function ProductsPage() {
             <main className="max-w-[1440px] mx-auto px-4 md:px-10 lg:px-20 py-8">
                 <div className="mb-10">
                     <nav className="flex items-center gap-2 text-sm text-slate-500 mb-4">
-                        <a className="hover:text-primary transition-colors" href="/">Home</a>
+                        <a className="hover:text-primary transition-colors" href="/">Accueil</a>
                         <span className="material-symbols-outlined text-xs">chevron_right</span>
                         <span className="text-slate-900 dark:text-slate-100 font-medium">Produits</span>
                     </nav>
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div>
-                            <h1 className="text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-slate-100 mb-3 tracking-tight">
-                                Organic &amp; Local
+                            <h1 className="text-4xl lg:text-5xl font-extrabold ...">
+                                Produits locaux & biologiques
                             </h1>
                             <p className="text-slate-600 dark:text-slate-400 max-w-md">
-                                Sourced with love from local farmers and producers.
+                                Sélectionnés avec soin auprès de producteurs locaux.
                             </p>
                         </div>
                         <div className="flex items-center gap-4">
@@ -663,59 +669,7 @@ export default function ProductsPage() {
                 </div>
             </main>
 
-            {/* Footer */}
-            <footer className="mt-20 border-t border-slate-200 dark:border-slate-800 py-12 px-4 md:px-10 lg:px-20 bg-white dark:bg-background-dark">
-                <div className="max-w-[1440px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
-                    <div className="col-span-1 md:col-span-2">
-                        <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100 mb-6">
-                            <div className="bg-primary p-1.5 rounded-lg flex items-center justify-center">
-                                <span className="material-symbols-outlined text-white text-xl">eco</span>
-                            </div>
-                            <h2 className="text-xl font-extrabold">VitaMarket</h2>
-                        </div>
-                        <p className="text-slate-500 max-w-sm mb-6 leading-relaxed">
-                            Connecting you directly with local farmers and artisans. Promoting sustainable living and fair trade for a healthier planet.
-                        </p>
-                        <div className="flex gap-4">
-                            <a className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-primary/20 transition-colors" href="#">
-                                <span className="material-symbols-outlined text-slate-600 dark:text-slate-400">public</span>
-                            </a>
-                            <a className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-primary/20 transition-colors" href="#">
-                                <span className="material-symbols-outlined text-slate-600 dark:text-slate-400">alternate_email</span>
-                            </a>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-slate-900 dark:text-slate-100 mb-6">Communauté</h4>
-                        <ul className="space-y-3 text-slate-500 text-sm font-medium">
-                            <li><a className="hover:text-primary transition-colors" href="#">Nos producteurs</a></li>
-                            <li><a className="hover:text-primary transition-colors" href="#">Guide vendeur</a></li>
-                            <li><a className="hover:text-primary transition-colors" href="#">Événements locaux</a></li>
-                            <li><a className="hover:text-primary transition-colors" href="#">Newsletter</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-slate-900 dark:text-slate-100 mb-6">Support</h4>
-                        <ul className="space-y-3 text-slate-500 text-sm font-medium">
-                            <li><a className="hover:text-primary transition-colors" href="#">Livraison</a></li>
-                            <li><a className="hover:text-primary transition-colors" href="#">Retours &amp; Remboursements</a></li>
-                            <li><a className="hover:text-primary transition-colors" href="#">Politique de confidentialité</a></li>
-                            <li><a className="hover:text-primary transition-colors" href="#">Contactez-nous</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div className="max-w-[1440px] mx-auto mt-12 pt-8 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p className="text-xs text-slate-400">© 2024 VitaMarket. Tous droits réservés.</p>
-                    <div className="flex items-center gap-6">
-                        <span className="text-xs text-slate-400 flex items-center gap-1">
-                            <span className="material-symbols-outlined text-sm">language</span> Français (DZ)
-                        </span>
-                        <span className="text-xs text-slate-400 flex items-center gap-1">
-                            <span className="material-symbols-outlined text-sm">monetization_on</span> DZD
-                        </span>
-                    </div>
-                </div>
-            </footer>
+
         </div>
     );
 }
