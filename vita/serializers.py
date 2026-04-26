@@ -121,9 +121,15 @@ class LigneCommandeSerializer(serializers.ModelSerializer):
     produit_nom = serializers.CharField(source="id_produit.nom", read_only=True)
     produit_url = serializers.CharField(source="id_produit.url", read_only=True)
     produit_vendeur = serializers.CharField(source="id_produit.id_vendeur.username", read_only=True)
+    vendeur_boutique = serializers.CharField(source="id_produit.id_vendeur.profil_vendeur.nom_boutique", read_only=True)
+
     class Meta:
         model = LigneCommande
-        fields = ["id","produit_nom", "produit_url", "quantite", "prix_unitaire","sous_total","produit_vendeur"]
+        fields = [
+            "id", "produit_nom", "produit_url", "quantite",
+            "prix_unitaire", "sous_total", "produit_vendeur",
+            "vendeur_boutique", "statut", "numero_suivi",
+        ]
 
 class CommandeSerializer(serializers.ModelSerializer):
     lignes = LigneCommandeSerializer(many=True, read_only=True)

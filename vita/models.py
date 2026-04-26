@@ -179,15 +179,6 @@ class LignePanier(models.Model):
 # Commande
 # =========================
 class Commande(models.Model):
-    class Statut(models.TextChoices):
-        EN_ATTENTE = "en_attente", "En attente"
-        CONFIRMEE = "confirmee", "Confirmée"
-        EN_PREPARATION = "en_preparation", "En préparation"
-        EXPEDIEE = "expediee", "Expédiée"
-        LIVREE = "livree", "Livrée"
-        COLLECTEE = "collectee", "Collectée"
-        ANNULEE = "annulee", "Annulée"
-
     numero_commande = models.CharField(max_length=50, unique=True)
 
     id_client = models.ForeignKey(
@@ -202,13 +193,11 @@ class Commande(models.Model):
     email = models.EmailField(max_length=255, blank=True, null=True)
     telephone = models.CharField(max_length=20, blank=True, null=True)
 
-    statut = models.CharField(max_length=30, choices=Statut.choices, default=Statut.EN_ATTENTE)
     sous_total = models.DecimalField(max_digits=10, decimal_places=2)
     frais_livraison = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=10, decimal_places=2)
 
     adresse_livraison = models.TextField()
-    numero_suivi = models.CharField(max_length=100, blank=True, null=True)
     is_deleted_by_client = models.BooleanField(default=False)
     is_deleted_by_vendor = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
@@ -223,17 +212,20 @@ class Commande(models.Model):
 # =========================
 class LigneCommande(models.Model):
     class Statut(models.TextChoices):
-        EN_ATTENTE = "en_attente"
-        CONFIRMEE = "confirmee"
-        EXPEDIEE = "expediee"
-        LIVREE = "livree"
-        ANNULEE = "annulee"
+        EN_ATTENTE    = "en_attente",    "En attente"
+        CONFIRMEE     = "confirmee",     "Confirmée"
+        EN_PREPARATION = "en_preparation", "En préparation"
+        EXPEDIEE      = "expediee",      "Expédiée"
+        LIVREE        = "livree",        "Livrée"
+        COLLECTEE     = "collectee",     "Collectée"
+        ANNULEE       = "annulee",       "Annulée"
 
     statut = models.CharField(
         max_length=20,
         choices=Statut.choices,
         default=Statut.EN_ATTENTE
     )
+    numero_suivi = models.CharField(max_length=100, blank=True, null=True)
     is_deleted_by_vendor = models.BooleanField(default=False)
     id_commande = models.ForeignKey(
         Commande,

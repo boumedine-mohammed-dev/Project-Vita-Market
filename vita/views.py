@@ -381,12 +381,10 @@ class CommandeViewSet(viewsets.ModelViewSet):
             email=request.data.get("email"),
             telephone=request.data.get("telephone"),
             adresse_livraison=request.data.get("adresse_livraison"),
-            statut="en_attente",
             sous_total=request.data.get("sous_total"),
             frais_livraison=request.data.get("frais_livraison"),
             total=request.data.get("total"),
             numero_commande=request.data.get("numero_commande"),
-            numero_suivi=request.data.get("numero_suivi"),
         )
 
         vendeurs = set()
@@ -439,14 +437,6 @@ class CommandeViewSet(viewsets.ModelViewSet):
     
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        old_status = instance.statut
-        new_status = request.data.get("statut", old_status)
-        if old_status != "annulee" and new_status == "annulee":
-            lignes = LigneCommande.objects.filter(id_commande=instance)
-            for ligne in lignes:
-                produit = ligne.id_produit
-                produit.quantite_stock += ligne.quantite
-                produit.save()
 
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -457,31 +447,28 @@ class CommandeViewSet(viewsets.ModelViewSet):
     def cancel(self, request, pk=None):
         commande = self.get_object()
 
-        if commande.statut == "annulee":
-            return Response({"error": "Déjà annulée"}, status=400)
-
         lignes = LigneCommande.objects.filter(id_commande=commande)
 
-        for ligne in lignes:
-            ligne.statut = "annulee"
-            ligne.save()
-            produit = ligne.id_produit
-            produit.quantite_stock += ligne.quantite
-            produit.save()
+        # If ALL lines are already cancelled, reject
+        if lignes.exists() and all(l.statut == "annulee" for l in lignes):
+            return Response({"error": "Déjà annulée"}, status=400)
 
         vendeurs = set()
         for ligne in lignes:
+            if ligne.statut != "annulee":
+                ligne.statut = "annulee"
+                ligne.save()
+                produit = ligne.id_produit
+                produit.quantite_stock += ligne.quantite
+                produit.save()
             vendeurs.add(ligne.id_vendeur)
 
         for vendeur in vendeurs:
             Notification.objects.create(
                 user=vendeur,
                 titre="Commande annulée",
-                message=f"Commande #{commande.numero_commande} annulée"
+                message=f"Commande #{commande.numero_commande} annulée par le client"
             )
-        commande.statut = "annulee"
-        commande.save()
-
 
         return Response({"message": "Commande annulée"})
 
@@ -492,30 +479,33 @@ class CommandeViewSet(viewsets.ModelViewSet):
         if user.type_user != "vendeur":
             return Response({"error": "Unauthorized"}, status=403)
 
-        lignes = LigneCommande.objects.filter(id_vendeur=user).select_related(
-            "id_commande", "id_produit"
-        )[:10]if request.query_params.get("limit") else LigneCommande.objects.filter(id_vendeur=user).select_related(
-            "id_commande", "id_produit"
-        )
+        # Exclude lines soft-deleted by this vendor
+        qs = LigneCommande.objects.filter(
+            id_vendeur=user,
+            is_deleted_by_vendor=False,
+        ).select_related("id_commande", "id_produit")
+
+        if request.query_params.get("limit"):
+            qs = qs[:10]
 
         commandes_map = {}
 
-        for ligne in lignes:
+        for ligne in qs:
             cmd = ligne.id_commande
 
             if cmd.id not in commandes_map:
                 commandes_map[cmd.id] = {
                     "id": cmd.id,
-                "numero_commande": cmd.numero_commande,
-                "nom": cmd.nom,
-                "email": cmd.email,
-                "telephone": cmd.telephone,
-                "adresse_livraison": cmd.adresse_livraison,
-                "statut": ligne.statut,
-                "created_at": cmd.created_at,
-                "total": 0,
-                "lignes": []
-            }
+                    "numero_commande": cmd.numero_commande,
+                    "nom": cmd.nom,
+                    "email": cmd.email,
+                    "telephone": cmd.telephone,
+                    "adresse_livraison": cmd.adresse_livraison,
+                    "statut": ligne.statut,
+                    "created_at": cmd.created_at,
+                    "total": 0,
+                    "lignes": []
+                }
 
             commandes_map[cmd.id]["total"] += ligne.sous_total
 
@@ -527,9 +517,31 @@ class CommandeViewSet(viewsets.ModelViewSet):
                 "prix_unitaire": ligne.prix_unitaire,
                 "sous_total": ligne.sous_total,
                 "statut": ligne.statut,
-        })
+            })
 
         return Response(list(commandes_map.values()))
+
+    @action(detail=True, methods=["patch"], url_path="delete_for_vendor", permission_classes=[IsAuthenticated])
+    def delete_for_vendor(self, request, pk=None):
+        """Soft-delete: hide this order from the vendor's view (keep for revenue)."""
+        commande = self.get_object()
+        user = request.user
+
+        if user.type_user != "vendeur":
+            return Response({"error": "Unauthorized"}, status=403)
+
+        lignes = LigneCommande.objects.filter(id_commande=commande, id_vendeur=user)
+
+        # Only allow soft-delete for terminal lines (annulee or collectee/livree)
+        non_terminal = lignes.exclude(statut__in=["annulee", "livree", "collectee"])
+        if non_terminal.exists():
+            return Response(
+                {"error": "Seules les commandes annulées ou terminées peuvent être supprimées."},
+                status=400
+            )
+
+        lignes.update(is_deleted_by_vendor=True)
+        return Response({"message": "Commande masquée pour le vendeur."})
     @action(detail=True, methods=["patch"], permission_classes=[IsAuthenticated])
     def delete_for_client(self, request, pk=None):
         commande = self.get_object()
@@ -556,24 +568,41 @@ class LigneCommandeViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         ligne = self.get_object()
-        print(ligne)
-        
-        # 🔒 حماية: vendeur يبدل غير lignes تاعه
+
+        # 🔒 Only the owning vendor can modify their line
         if ligne.id_vendeur != request.user:
             return Response({"error": "Unauthorized"}, status=403)
 
         new_status = request.data.get("statut")
 
-        # 💡 تقدر تضيف status في LigneCommande (أفضل)
-        ligne.statut = new_status
-        # بعد update status
-        Notification.objects.create(
-            user=ligne.id_vendeur,
-            titre="Mise à jour commande",
-            message=f"Votre commande a été mise à jour: {new_status}"
-        )
-        ligne.save()
+        # 🚫 A cancelled line cannot be changed anymore
+        if ligne.statut == "annulee":
+            return Response(
+                {"error": "Cette ligne a été annulée et ne peut plus être modifiée."},
+                status=400
+            )
 
+        # 📦 If vendor cancels a line, restore the product stock
+        if new_status == "annulee" and ligne.statut != "annulee":
+            produit = ligne.id_produit
+            produit.quantite_stock += ligne.quantite
+            produit.save()
+
+        ligne.statut = new_status
+
+        # Also update tracking number if provided
+        if "numero_suivi" in request.data:
+            ligne.numero_suivi = request.data["numero_suivi"]
+
+        # Notify the client
+        if ligne.id_commande.id_client:
+            Notification.objects.create(
+                user=ligne.id_commande.id_client,
+                titre="Mise à jour de votre commande",
+                message=f"La commande #{ligne.id_commande.numero_commande} a été mise à jour : {new_status}"
+            )
+
+        ligne.save()
         return Response({"message": "Status updated"})
 
 class FavoriViewSet(viewsets.ModelViewSet):
@@ -676,14 +705,14 @@ class VendorDashboardViewSet(viewsets.ViewSet):
         # Commande lines for this vendor
         lignes = LigneCommande.objects.filter(id_vendeur=user)
         
-        # Calculate revenue (ignore cancelled)
-        revenue = lignes.exclude(id_commande__statut="annulee").aggregate(total=Sum("sous_total"))["total"] or 0
+        # Calculate revenue — only from completed (livree / collectee) lines
+        revenue = lignes.filter(statut__in=["livree", "collectee"]).aggregate(total=Sum("sous_total"))["total"] or 0
 
-        # Unique orders for this vendor
+        # Unique orders for this vendor (all, including soft-deleted — for totals)
         total_orders = lignes.values("id_commande").distinct().count()
 
-        # Pending orders
-        pending_orders = lignes.filter(id_commande__statut__in=["en_attente", "en attente"]).values("id_commande").distinct().count()
+        # Pending orders (lines still en_attente, not soft-deleted)
+        pending_orders = lignes.filter(statut="en_attente", is_deleted_by_vendor=False).values("id_commande").distinct().count()
 
         return Response({
             "total_products": total_products,
@@ -708,10 +737,12 @@ class VendorDashboardViewSet(viewsets.ViewSet):
         else:
             start_date = now - timedelta(days=30)
             
+        # Only count completed (livree / collectee) lines for sales evolution
         lignes = LigneCommande.objects.filter(
             id_vendeur=user,
-            id_commande__created_at__gte=start_date
-        ).exclude(id_commande__statut="annulee")
+            id_commande__created_at__gte=start_date,
+            statut__in=["livree", "collectee"]
+        )
         
         data = []
         # Grouping by day
