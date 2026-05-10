@@ -13,6 +13,12 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 import cloudinary
+import ssl
+
+# Bypass SSL verification for local dev
+ssl._create_default_https_context = ssl._create_unverified_context
+ssl.create_default_context = ssl._create_unverified_context
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'vita_market.authentication.CookieJWTAuthentication',
@@ -141,3 +147,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Email Configuration (Gmail SMTP)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'boumedinemohammed664@gmail.com'
+EMAIL_HOST_PASSWORD = 'bahk znij lagy luqp' # À remplir avec le mot de passe d'application de ce nouveau compte
+DEFAULT_FROM_EMAIL = 'Vita Market <boumedinemohammed664@gmail.com>'
+

@@ -2,7 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.mixins import CreateModelMixin
 from .models import User,Produit,Categorie,Panier,LignePanier,ProfilClient,ProfilVendeur,Commande,LigneCommande,Favori,Avis,Notification
-from .serializers import RegisterSerializer,LoginSerializer,MeSerializer,ProductSerializer,CategorySerializer,PanierSerializer,LignePanierUpdateSerializer,ProfilClientSerializer,ProfilVendeurSerializer,CommandeSerializer,FavoriSerializer,AvisSerializer,MeUpdateSerializer,NotificationSerializer
+from .serializers import RegisterSerializer,LoginSerializer,MeSerializer,ProductSerializer,CategorySerializer,PanierSerializer,LignePanierUpdateSerializer,ProfilClientSerializer,ProfilVendeurSerializer,CommandeSerializer,FavoriSerializer,AvisSerializer,MeUpdateSerializer,NotificationSerializer,PasswordChangeSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import action
 from django.contrib.auth import authenticate
@@ -11,7 +11,12 @@ from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from django.db.models import Avg, Sum, Count
+from django.core.mail import send_mail
 from rest_framework import serializers
+from rest_framework.views import APIView
+from django.conf import settings
+
+import requests
 # Create your views here.
 
 class AuthViewSet(CreateModelMixin, viewsets.GenericViewSet):
@@ -23,6 +28,67 @@ class AuthViewSet(CreateModelMixin, viewsets.GenericViewSet):
 
         if serializer.is_valid():
             user = serializer.save()
+
+            # 📧 Send Welcome Email
+            try:
+                if user.type_user == "vendeur":
+                    subject = "Bienvenue chez Vita Market - Inscription Vendeur"
+                    html_message = f"""
+                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                        <div style="background-color: #81e240; padding: 20px; text-align: center;">
+                            <h1 style="color: #182111; margin: 0;">Vita Market</h1>
+                        </div>
+                        <div style="padding: 30px; color: #334155;">
+                            <h2 style="color: #182111;">Bienvenue, {user.prenom} !</h2>
+                            <p>Nous sommes ravis de vous compter parmi nos nouveaux vendeurs.</p>
+                            <p><strong>Note importante :</strong> Votre compte est actuellement en attente d'approbation par notre équipe administrative. Vous recevrez une notification dès que votre boutique sera activée.</p>
+                            <p>En attendant, vous pouvez commencer à configurer votre profil dans votre espace vendeur.</p>
+                            <div style="margin: 30px 0; text-align: center;">
+                                <a href="http://localhost:3000/login" style="background-color: #182111; color: #81e240; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                                    Accéder à mon espace
+                                </a>
+                            </div>
+                            <p style="font-size: 14px; color: #64748b;">Si vous avez des questions, n'hésitez pas à nous contacter.</p>
+                        </div>
+                        <div style="background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8;">
+                            &copy; 2026 Vita Market. Tous droits réservés.
+                        </div>
+                    </div>
+                    """
+                else:
+                    subject = "Bienvenue chez Vita Market !"
+                    html_message = f"""
+                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                        <div style="background-color: #81e240; padding: 20px; text-align: center;">
+                            <h1 style="color: #182111; margin: 0;">Vita Market</h1>
+                        </div>
+                        <div style="padding: 30px; color: #334155;">
+                            <h2 style="color: #182111;">Bienvenue, {user.prenom} !</h2>
+                            <p>Merci d'avoir rejoint la communauté Vita Market.</p>
+                            <p>Vous pouvez désormais découvrir et acheter les meilleurs produits locaux et biologiques directement auprès de nos producteurs.</p>
+                            <div style="margin: 30px 0; text-align: center;">
+                                <a href="http://localhost:3000/products" style="background-color: #182111; color: #81e240; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                                    Découvrir nos produits
+                                </a>
+                            </div>
+                            <p style="font-size: 14px; color: #64748b;">À bientôt sur Vita Market !</p>
+                        </div>
+                        <div style="background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8;">
+                            &copy; 2026 Vita Market. Tous droits réservés.
+                        </div>
+                    </div>
+                    """
+
+                send_mail(
+                    subject=subject,
+                    message=f"Bonjour {user.prenom}, bienvenue sur Vita Market !",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=True,
+                    html_message=html_message
+                )
+            except Exception as e:
+                print(f"Error sending welcome email: {e}")
 
             refresh = RefreshToken.for_user(user)
 
@@ -59,6 +125,76 @@ class AuthViewSet(CreateModelMixin, viewsets.GenericViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class ForgotPasswordViewSet(viewsets.ViewSet):
+    def create(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({"error": "L'adresse email est requise"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(email=email)
+            
+            # Django Email config
+            reset_link = f"http://localhost:3000/reset-password?token=mock_token_{user.id}"
+            
+            html_message = f"""
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #81e240;">Vita Market</h2>
+                <p>Bonjour {user.prenom},</p>
+                <p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
+                <p>Cliquez sur le lien ci-dessous pour créer un nouveau mot de passe :</p>
+                <div style="margin: 30px 0;">
+                    <a href="{reset_link}" style="background-color: #81e240; color: #182111; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                        Réinitialiser mon mot de passe
+                    </a>
+                </div>
+                <p>Si vous n'avez pas fait cette demande, vous pouvez ignorer cet email en toute sécurité.</p>
+                <p>À bientôt,<br>L'équipe Vita Market</p>
+            </div>
+            """
+            
+            try:
+                send_mail(
+                    subject="Réinitialisation de votre mot de passe - Vita Market",
+                    message=f"Bonjour {user.prenom},\nVous avez demandé la réinitialisation de votre mot de passe.\nCliquez sur ce lien: {reset_link}",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                    html_message=html_message
+                )
+            except Exception as e:
+                print(f"Error calling Django send_mail: {e}")
+                return Response({"error": f"Erreur interne lors de l'envoi de l'email: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            return Response({"message": "Si cette adresse existe, un email a été envoyé avec les instructions de réinitialisation."}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            # Prevent email enumeration by returning the same success message
+            return Response({"message": "Si cette adresse existe, un email a été envoyé avec les instructions de réinitialisation."}, status=status.HTTP_200_OK)
+
+class ResetPasswordViewSet(viewsets.ViewSet):
+    def create(self, request):
+        token = request.data.get('token')
+        new_password = request.data.get('password')
+        
+        if not token or not new_password:
+            return Response({"error": "Token et mot de passe requis"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validation du mock token: mock_token_{id}
+        if not token.startswith("mock_token_"):
+            return Response({"error": "Token invalide"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user_id = token.replace("mock_token_", "")
+            user = User.objects.get(id=user_id)
+            
+            # Mise à jour réelle du mot de passe
+            user.set_password(new_password)
+            user.save()
+            
+            return Response({"message": "Mot de passe réinitialisé avec succès !"}, status=status.HTTP_200_OK)
+        except (User.DoesNotExist, ValueError):
+            return Response({"error": "Utilisateur non trouvé ou token invalide"}, status=status.HTTP_400_BAD_REQUEST)
+
 class AuthLoginViewSet(viewsets.GenericViewSet):
     serializer_class = LoginSerializer
 
@@ -73,7 +209,7 @@ class AuthLoginViewSet(viewsets.GenericViewSet):
 
             if user is None:
                 return Response(
-                    {"error": "Invalid credentials"},
+                    {"error": "Nom d'utilisateur ou mot de passe incorrect"},
                     status=status.HTTP_401_UNAUTHORIZED
                 )
 
@@ -165,6 +301,16 @@ class MeAuthViewSet(viewsets.ViewSet):
         response.delete_cookie("refresh_token")
 
         return response
+
+    @action(detail=False, methods=["post"], url_path="change-password", permission_classes=[IsAuthenticated])
+    def change_password(self, request):
+        serializer = PasswordChangeSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            user = request.user
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            return Response({"message": "Mot de passe modifié avec succès"})
+        return Response(serializer.errors, status=400)
 
 
 ###############################----Products Vendor
@@ -504,7 +650,8 @@ class CommandeViewSet(viewsets.ModelViewSet):
                     "statut": ligne.statut,
                     "created_at": cmd.created_at,
                     "total": 0,
-                    "lignes": []
+                    "lignes": [],
+                    "frais_livraison":cmd.frais_livraison
                 }
 
             commandes_map[cmd.id]["total"] += ligne.sous_total

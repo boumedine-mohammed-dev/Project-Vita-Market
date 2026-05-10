@@ -1,0 +1,91 @@
+{% extends "vita/dashboard/base.html" %}
+{% block title %}Utilisateurs — Vita Market{% endblock %}
+{% block topbar_title %}Utilisateurs{% endblock %}
+{% block topbar_sub %}{{ users|length }} utilisateur{{ users|length|pluralize }}{% endblock %}
+
+{% block content %}
+<div class="card animate">
+  <div class="filter-bar">
+    <form method="get" style="display:flex;gap:10px;flex:1;flex-wrap:wrap">
+      <div class="search" style="width:260px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input name="q" value="{{ q }}" placeholder="Nom d'utilisateur ou email…">
+      </div>
+      <button type="submit" class="btn btn-primary">🔍 Filtrer</button>
+      {% if q %}<a href="{% url 'dashboard:users' %}" class="btn btn-ghost">✕ Effacer</a>{% endif %}
+    </form>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Utilisateur</th>
+          <th>Rôle</th>
+          <th>Statut</th>
+          <th>Inscrit le</th>
+          <th>Dernière connexion</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>
+            <div class="user-cell">
+              <div class="av {% cycle 'av-blue' 'av-green' 'av-orange' 'av-red' 'av-purple' %}">{{ u.username|first|upper }}</div>
+              <div>
+                <div class="user-info-name">{{ u.username }}</div>
+                <div class="user-info-sub">{{ u.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            {% if u.is_superuser %}
+              <span class="badge badge-red">Super Admin</span>
+            {% elif u.is_staff %}
+              <span class="badge badge-orange">Staff</span>
+            {% else %}
+              <span class="badge badge-gray">Utilisateur</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if u.is_active %}
+              <span class="badge badge-green"><span class="badge-dot"></span>Actif</span>
+            {% else %}
+              <span class="badge badge-red"><span class="badge-dot"></span>Inactif</span>
+            {% endif %}
+          </td>
+          <td style="font-size:12px;color:var(--text2)">{{ u.date_joined|date:"d M Y" }}</td>
+          <td style="font-size:12px;color:var(--text2)">{{ u.last_login|date:"d M Y H:i"|default:"—" }}</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <!-- Toggle active -->
+              <form id="toggle-{{ u.id }}" method="post" action="{% url 'dashboard:user_toggle' u.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost btn-sm btn-icon" title="{% if u.is_active %}Désactiver{% else %}Activer{% endif %}">
+                  {% if u.is_active %}🔒{% else %}🔓{% endif %}
+                </button>
+              </form>
+              <!-- Delete -->
+              {% if not u.is_superuser %}
+              <form id="del-user-{{ u.id }}" method="post" action="{% url 'dashboard:user_delete' u.id %}">
+                {% csrf_token %}
+                <button type="button" onclick="confirmDelete('del-user-{{ u.id }}','{{ u.username }}')" class="btn btn-danger btn-sm btn-icon" title="Supprimer">🗑</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6">
+            <div class="empty"><div class="empty-icon">👥</div><div class="empty-title">Aucun utilisateur trouvé</div><div class="empty-sub">Essayez un autre terme de recherche</div></div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

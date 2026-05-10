@@ -122,14 +122,18 @@ class LigneCommandeSerializer(serializers.ModelSerializer):
     produit_url = serializers.CharField(source="id_produit.url", read_only=True)
     produit_vendeur = serializers.CharField(source="id_produit.id_vendeur.username", read_only=True)
     vendeur_boutique = serializers.CharField(source="id_produit.id_vendeur.profil_vendeur.nom_boutique", read_only=True)
+    has_avis = serializers.SerializerMethodField()
 
     class Meta:
         model = LigneCommande
         fields = [
             "id", "produit_nom", "produit_url", "quantite",
             "prix_unitaire", "sous_total", "produit_vendeur",
-            "vendeur_boutique", "statut", "numero_suivi",
+            "vendeur_boutique", "statut", "numero_suivi", "has_avis"
         ]
+
+    def get_has_avis(self, obj):
+        return hasattr(obj, 'avis') and obj.avis is not None
 
 class CommandeSerializer(serializers.ModelSerializer):
     lignes = LigneCommandeSerializer(many=True, read_only=True)
@@ -240,3 +244,18 @@ class NotificationSerializer(serializers.ModelSerializer):
         model = Notification
         fields = "__all__"
         read_only_fields = ["user", "created_at"]
+
+class PasswordChangeSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("L'ancien mot de passe est incorrect")
+        return value
+
+    def validate_new_password(self, value):
+        if len(value) < 8:
+            raise serializers.ValidationError("Le nouveau mot de passe doit faire au moins 8 caractères")
+        return value

@@ -1,0 +1,44 @@
+{% extends "vita/dashboard/base.html" %}
+{% block title %}Avis — Vita Market{% endblock %}
+{% block topbar_title %}Avis clients{% endblock %}
+{% block topbar_sub %}{{ avis|length }} avis{% endblock %}
+
+{% block content %}
+<div class="card animate">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Client</th><th>Produit</th><th>Note</th><th>Commentaire</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for a in avis %}
+        <tr>
+          <td>
+            <div class="user-cell">
+              <div class="av av-blue">{{ a.client.username|first|upper }}</div>
+              <span class="user-info-name">{{ a.client.username }}</span>
+            </div>
+          </td>
+          <td style="font-size:13px;font-weight:600">{{ a.produit.nom }}</td>
+          <td>
+            <div style="display:flex;gap:1px">
+              {% for i in "12345" %}
+                <span style="font-size:13px;{% if forloop.counter <= a.note %}color:#f59e0b{% else %}color:var(--border2){% endif %}">★</span>
+              {% endfor %}
+            </div>
+          </td>
+          <td style="font-size:12px;color:var(--text2);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.commentaire|default:"—" }}</td>
+          <td style="font-size:12px;color:var(--text2)">{{ a.date_avis|date:"d M Y" }}</td>
+          <td>
+            <form id="del-avis-{{ a.id }}" method="post" action="{% url 'dashboard:avis_delete' a.id %}">
+              {% csrf_token %}
+              <button type="button" onclick="confirmDelete('del-avis-{{ a.id }}','cet avis')" class="btn btn-danger btn-sm btn-icon">🗑</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6"><div class="empty"><div class="empty-icon">⭐</div><div class="empty-title">Aucun avis</div></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

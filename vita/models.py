@@ -77,6 +77,7 @@ class ProfilVendeur(models.Model):
     adresse_boutique = models.TextField(blank=True, null=True)
     date_approbation = models.DateTimeField(blank=True, null=True)
     statut = models.CharField(max_length=20, choices=Statut.choices)
+    created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.nom_boutique
