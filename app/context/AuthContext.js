@@ -1,5 +1,6 @@
 'use client'
 import { createContext, useContext, useState, useEffect } from "react";
+import { toast } from "react-toastify";
 
 const AuthContext = createContext();
 
@@ -52,37 +53,56 @@ export const AuthProvider = ({ children }) => {
             setMessage(data?.message);
             setError(data?.error);
             if (res.ok) {
+                toast.success(data?.message || "Connexion réussie");
                 await checkAuth(); // get user directly
+            } else {
+                toast.error(data?.error || "Erreur de connexion");
             }
 
             return data;
         } catch (error) {
             console.log(error);
+            toast.error(error.message || "Erreur de connexion");
             setError(error.message);
         }
     };
 
     //  register
     const register = async (formData) => {
-        const res = await fetch("http://localhost:8000/register/", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData),
-        });
+        try {
+            const res = await fetch("http://localhost:8000/register/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            });
 
-        return await res.json();
+            const data = await res.json();
+            if (res.ok) {
+                toast.success(data?.message || "Inscription réussie");
+            } else {
+                toast.error(data?.error || "Erreur d'inscription");
+            }
+            return data;
+        } catch (error) {
+            toast.error(error.message || "Erreur d'inscription");
+            throw error;
+        }
     };
 
     //  logout
     const logout = async () => {
-        await fetch("http://localhost:8000/logout/", {
-            method: "POST",
-            credentials: "include",
-        });
-
-        setUser(null);
+        try {
+            await fetch("http://localhost:8000/logout/", {
+                method: "POST",
+                credentials: "include",
+            });
+            toast.success("Déconnexion réussie");
+            setUser(null);
+        } catch (error) {
+            toast.error("Erreur de déconnexion");
+        }
     };
 
     return (

@@ -4,6 +4,8 @@ import "./globals.css";
 import { useAuthStore } from "./Store/useAuthStore";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,15 +24,6 @@ export default function RootLayout({ children }) {
   const { checkAuth, user } = useAuthStore();
   useEffect(() => {
     checkAuth();
-    if (user) {
-      if (user.role === "client") {
-        router.push("/");
-      } else if (user.role === "vendor") {
-        router.push("/dashboard");
-      } else {
-        router.push("/login");
-      }
-    }
   }, []);
   return (
     <html lang="en">
@@ -42,7 +35,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="antialiased">
 
-
+        <ToastContainer position="bottom-right" />
         {children}
 
 

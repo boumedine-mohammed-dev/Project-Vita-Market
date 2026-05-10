@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useClientStore } from "@/app/Store/useClientStore";
 import { useAuthStore } from "@/app/Store/useAuthStore";
 import Link from "next/link";
+import { toast } from "react-toastify";
 
 export default function ProductsPage() {
     const [products, setProducts] = useState([]);
@@ -24,9 +25,15 @@ export default function ProductsPage() {
 
     useEffect(() => {
         const fetchProducts = async () => {
-            const res = await fetch("http://localhost:8000/products/all/");
-            const data = await res.json();
-            setProducts(data);
+            try {
+                const res = await fetch("http://localhost:8000/products/all/");
+                if (res.ok) {
+                    const data = await res.json();
+                    setProducts(data);
+                }
+            } catch (err) {
+                console.error(err);
+            }
         };
         const fetchCategories = async () => {
             try {
@@ -50,9 +57,13 @@ export default function ProductsPage() {
                 console.error(err);
             }
         };
+        
         fetchCategories();
         fetchProducts();
         fetchFavorisIds();
+
+        const intervalId = setInterval(fetchProducts, 5000);
+        return () => clearInterval(intervalId);
     }, []);
 
     useEffect(() => {
@@ -107,6 +118,20 @@ export default function ProductsPage() {
     }, [products]);
 
     const filteredProducts = useMemo(() => {
+        // Pre-compute the set of category IDs that match the selected filter
+        // We use IDs because multiple child categories can share the same name
+        // (e.g., "Confiserie" exists under Sans Gluten, Sans Sucre, Sans Lactose, etc.)
+        let allowedCategoryIds = null;
+        if (selectedCategory) {
+            allowedCategoryIds = new Set([selectedCategory.id]);
+            // If the selected category is a parent (no categorie_parente), include all its children
+            if (!selectedCategory.categorie_parente) {
+                allCategories
+                    .filter(c => c.categorie_parente === selectedCategory.nom)
+                    .forEach(c => allowedCategoryIds.add(c.id));
+            }
+        }
+
         let result = products.filter((p) => {
             const price = parseFloat(p.prix);
 
@@ -115,7 +140,7 @@ export default function ProductsPage() {
                 searchTerm === "" ||
                 p.nom.toLowerCase().includes(searchTerm.toLowerCase());
 
-            const categoryMatch = !selectedCategory || p.category_name === selectedCategory.nom;
+            const categoryMatch = !allowedCategoryIds || allowedCategoryIds.has(p.id_categorie);
             const minMatch = priceInputMin === "" || price >= parseFloat(priceInputMin);
             const maxMatch = priceInputMax === "" || price <= parseFloat(priceInputMax);
             const ratingMatch = minRatingFilter === null || parseFloat(p.note_moyenne) >= minRatingFilter;
@@ -144,6 +169,7 @@ export default function ProductsPage() {
         products,
         searchTerm,
         selectedCategory,
+        allCategories,
         priceInputMin,
         priceInputMax,
         sortOption,
@@ -169,7 +195,7 @@ export default function ProductsPage() {
     const toggleFavori = async (productId) => {
         const user = useAuthStore.getState().user;
         if (!user) {
-            alert("Vous n'êtes pas authentifié");
+            toast.error("Vous n'êtes pas authentifié");
             return;
         }
 
@@ -218,7 +244,7 @@ export default function ProductsPage() {
         const user = useAuthStore.getState().user;
         if (!user) {
             useClientStore.getState().addToCartLocal(product, 1);
-            alert("Produit ajouté au panier (Invité) 🛒");
+            toast.success("Produit ajouté au panier (Invité) 🛒");
             return;
         }
 
@@ -231,13 +257,13 @@ export default function ProductsPage() {
             });
 
             if (!res.ok) {
-                alert("Erreur ajout panier");
+                toast.error("Erreur ajout panier");
                 return;
             }
 
             await syncCart();
 
-            alert("Produit ajouté au panier 🛒");
+            toast.success("Produit ajouté au panier 🛒");
         } catch (err) {
             console.error(err);
         }
@@ -385,6 +411,7 @@ export default function ProductsPage() {
                                         <label className="text-xs text-slate-400 mb-1 block">Min</label>
                                         <input
                                             type="number"
+                                            min="0"
                                             placeholder={globalMin.toString()}
                                             value={priceInputMin}
                                             onChange={(e) => { setPriceInputMin(e.target.value); setCurrentPage(1); }}
@@ -395,6 +422,7 @@ export default function ProductsPage() {
                                         <label className="text-xs text-slate-400 mb-1 block">Max</label>
                                         <input
                                             type="number"
+                                            min="0"
                                             placeholder={globalMax.toString()}
                                             value={priceInputMax}
                                             onChange={(e) => { setPriceInputMax(e.target.value); setCurrentPage(1); }}

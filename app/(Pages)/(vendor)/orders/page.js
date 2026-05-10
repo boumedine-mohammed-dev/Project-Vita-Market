@@ -1,5 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from "react";
+import { toast } from "react-toastify";
+import { useConfirmDialog } from '../../components/AlertDialog'
 
 // ─── Status config (Django choices) ──────────────────────────────────────────
 const STATUS_CONFIG = {
@@ -92,6 +94,7 @@ function StatusBadge({ statut }) {
 function OrderMenu({ order, onUpdated, onDeleted, onClose }) {
     const [loading, setLoading] = useState(false)
     const [deleting, setDeleting] = useState(false)
+    const { dialog, confirmAction } = useConfirmDialog()
     const currentStatut = getOrderStatut(order)
     const canDelete = isTerminalOrder(order)
     const isCancelled = currentStatut === 'annulee'
@@ -99,9 +102,24 @@ function OrderMenu({ order, onUpdated, onDeleted, onClose }) {
     const handleChange = async (newStatus) => {
         if (newStatus === currentStatut) { onClose(); return }
 
-        // Confirm before cancelling
         if (newStatus === 'annulee') {
-            if (!confirm('Êtes-vous sûr de vouloir annuler cette commande ? Le stock sera restauré et cette action est irréversible.')) return
+            confirmAction({
+                title: 'Annuler la commande',
+                description: 'Êtes-vous sûr de vouloir annuler cette commande ? Le stock sera restauré et cette action est irréversible.',
+                confirmText: 'Oui, annuler',
+                cancelText: 'Non',
+                variant: 'danger',
+                onConfirm: async () => {
+                    setLoading(true)
+                    try {
+                        await patchLignes(order.lignes, newStatus)
+                        onUpdated(order.id, newStatus)
+                        onClose()
+                    } catch (e) { console.error(e) }
+                    finally { setLoading(false) }
+                }
+            })
+            return
         }
 
         setLoading(true)
@@ -113,80 +131,91 @@ function OrderMenu({ order, onUpdated, onDeleted, onClose }) {
         finally { setLoading(false) }
     }
 
-    const handleDelete = async () => {
-        if (!confirm('Masquer cette commande de votre tableau de bord ?')) return
-        setDeleting(true)
-        try {
-            const res = await fetch(`http://localhost:8000/commandes/${order.id}/delete_for_vendor/`, {
-                method: 'PATCH',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-            })
-            if (!res.ok) {
-                const data = await res.json()
-                alert(data.error ?? 'Erreur')
-                return
+    const handleDelete = () => {
+        confirmAction({
+            title: 'Masquer la commande',
+            description: 'Masquer cette commande de votre tableau de bord ?',
+            confirmText: 'Masquer',
+            cancelText: 'Annuler',
+            variant: 'warning',
+            onConfirm: async () => {
+                setDeleting(true)
+                try {
+                    const res = await fetch(`http://localhost:8000/commandes/${order.id}/delete_for_vendor/`, {
+                        method: 'PATCH',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                    })
+                    if (!res.ok) {
+                        const data = await res.json()
+                        toast.error(data.error ?? 'Erreur')
+                        return
+                    }
+                    onDeleted(order.id)
+                    onClose()
+                } catch (e) { console.error(e) }
+                finally { setDeleting(false) }
             }
-            onDeleted(order.id)
-            onClose()
-        } catch (e) { console.error(e) }
-        finally { setDeleting(false) }
+        })
     }
 
     return (
-        <div className="absolute right-0 top-9 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl w-56 overflow-hidden">
-            {isCancelled ? (
-                /* ── Locked state: order is already cancelled ── */
-                <div className="p-4 flex flex-col gap-2">
-                    <div className="flex items-center gap-2 text-red-500">
-                        <span className="material-symbols-outlined text-base">block</span>
-                        <p className="text-xs font-bold">Commande annulée</p>
+        <>
+            <div className="absolute right-0 top-9 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl w-56 overflow-hidden">
+                {isCancelled ? (
+                    /* ── Locked state: order is already cancelled ── */
+                    <div className="p-4 flex flex-col gap-2">
+                        <div className="flex items-center gap-2 text-red-500">
+                            <span className="material-symbols-outlined text-base">block</span>
+                            <p className="text-xs font-bold">Commande annulée</p>
+                        </div>
+                        <p className="text-[11px] text-slate-400 leading-relaxed">
+                            Le statut d&apos;une commande annulée ne peut plus être modifié.
+                        </p>
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                        Le statut d&apos;une commande annulée ne peut plus être modifié.
-                    </p>
-                </div>
-            ) : (
-                <>
-                    <p className="px-4 pt-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                        {loading ? 'Mise à jour...' : 'Changer le statut'}
-                    </p>
-                    <div className="p-1">
-                        {ALL_STATUSES.map((s) => {
-                            const cfg = getStatus(s)
-                            const isCurrent = s === currentStatut
-                            return (
-                                <button key={s} onClick={() => handleChange(s)} disabled={loading || isCurrent}
-                                    className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors
+                ) : (
+                    <>
+                        <p className="px-4 pt-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                            {loading ? 'Mise à jour...' : 'Changer le statut'}
+                        </p>
+                        <div className="p-1">
+                            {ALL_STATUSES.map((s) => {
+                                const cfg = getStatus(s)
+                                const isCurrent = s === currentStatut
+                                return (
+                                    <button key={s} onClick={() => handleChange(s)} disabled={loading || isCurrent}
+                                        className={`flex items-center justify-between w-full px-3 py-2 rounded-lg text-sm transition-colors
                                         ${isCurrent ? 'bg-slate-50 dark:bg-slate-800 cursor-default' : 'hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer'}
                                         disabled:opacity-60`}>
-                                    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${cfg.color}`}>
-                                        <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                                        {cfg.label}
-                                    </span>
-                                    {isCurrent && <span className="material-symbols-outlined text-primary text-sm">check</span>}
-                                </button>
-                            )
-                        })}
-                    </div>
-                </>
-            )}
-            {canDelete && (
-                <>
-                    <div className="mx-3 my-1 border-t border-slate-100 dark:border-slate-800" />
-                    <div className="p-1 pb-2">
-                        <button
-                            onClick={handleDelete}
-                            disabled={deleting}
-                            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors disabled:opacity-50"
-                        >
-                            <span className="material-symbols-outlined text-base">delete_outline</span>
-                            {deleting ? 'Suppression...' : 'Masquer la commande'}
-                        </button>
-                    </div>
-                </>
-            )}
-        </div>
+                                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${cfg.color}`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                                            {cfg.label}
+                                        </span>
+                                        {isCurrent && <span className="material-symbols-outlined text-primary text-sm">check</span>}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </>
+                )}
+                {canDelete && (
+                    <>
+                        <div className="mx-3 my-1 border-t border-slate-100 dark:border-slate-800" />
+                        <div className="p-1 pb-2">
+                            <button
+                                onClick={handleDelete}
+                                disabled={deleting}
+                                className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors disabled:opacity-50"
+                            >
+                                <span className="material-symbols-outlined text-base">delete_outline</span>
+                                {deleting ? 'Suppression...' : 'Masquer la commande'}
+                            </button>
+                        </div>
+                    </>
+                )}
+            </div>
+            {dialog}
+        </>
     )
 }
 
@@ -208,6 +237,7 @@ function OrderModal({ order, onClose, onStatusChange }) {
     const nextStatus = NEXT_STATUS[currentStatut]
     const currentStep = STEP_MAP[currentStatut] ?? 0
     const isCancelled = currentStatut === 'annulee'
+    console.log(order);
 
     useEffect(() => {
         const h = (e) => { if (e.key === 'Escape') onClose() }
@@ -368,13 +398,9 @@ function OrderModal({ order, onClose, onStatusChange }) {
                     <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <div className="divide-y divide-slate-100 dark:divide-slate-700">
                             <div className="px-5 py-3 flex justify-between text-sm">
-                                <span className="text-slate-500">Sous-total</span>
-                                <span className="font-medium">{fmt(order.sous_total)} دج</span>
-                            </div>
-                            <div className="px-5 py-3 flex justify-between text-sm">
                                 <span className="text-slate-500">Livraison</span>
-                                <span className={`font-medium ${parseFloat(order.frais_livraison ?? 0) === 0 ? 'text-primary' : ''}`}>
-                                    {parseFloat(order.frais_livraison ?? 0) === 0 ? 'Gratuite' : `${fmt(order.frais_livraison)} دج`}
+                                <span className="font-medium">
+                                    {fmt(order.frais_livraison)} دج
                                 </span>
                             </div>
                             <div className="px-5 py-4 flex justify-between font-bold text-base">
@@ -419,7 +445,8 @@ export default function OrderManagement() {
     const ITEMS_PER_PAGE = 10
 
     useEffect(() => {
-        const load = async () => {
+        const load = async (isBackground = false) => {
+            if (!isBackground) setLoading(true);
             try {
                 const res = await fetch("http://localhost:8000/commandes/vendeur/", { credentials: "include" })
                 if (res.ok) {
@@ -427,9 +454,11 @@ export default function OrderManagement() {
                     setOrders(Array.isArray(data) ? data : data.results ?? [])
                 }
             } catch (e) { console.error(e) }
-            finally { setLoading(false) }
+            finally { if (!isBackground) setLoading(false); }
         }
         load()
+        const intervalId = setInterval(() => load(true), 5000);
+        return () => clearInterval(intervalId);
     }, [])
 
     useEffect(() => {
@@ -544,7 +573,10 @@ export default function OrderManagement() {
                                 <div className="px-6 py-3 flex items-center gap-3">
                                     <div className="relative flex-1 max-w-sm">
                                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
-                                        <input value={search} onChange={(e) => handleSearch(e.target.value)}
+                                        <input
+                                            type="text"
+                                            value={search}
+                                            onChange={(e) => handleSearch(e.target.value)}
                                             placeholder="Rechercher par n° commande, client..."
                                             className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" />
                                         {search && (
@@ -740,7 +772,7 @@ export default function OrderManagement() {
                         </div>
 
                         <footer className="text-xs text-slate-400 pt-4 pb-6">
-                            © 2024 VitaMarket. Tous droits réservés.
+                            © 2026 VitaMarket. Tous droits réservés.
                         </footer>
                     </div>
                 </main>

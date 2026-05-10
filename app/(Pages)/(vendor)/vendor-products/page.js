@@ -2,6 +2,7 @@
 import Head from 'next/head'
 import { useEffect, useState } from "react";
 import Modal from '../../components/Modal'
+import { useConfirmDialog } from '../../components/AlertDialog'
 
 // Stats initializaton moved inside the component to react to data changes
 
@@ -18,6 +19,7 @@ export default function VendorProductsPage() {
     const [statsData, setStatsData] = useState([]);
     const [editingProduct, setEditingProduct] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
+    const { dialog, confirmAction } = useConfirmDialog();
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -74,21 +76,27 @@ export default function VendorProductsPage() {
         }
         return pages;
     };
-    const handleDelete = async (id) => {
-        if (!confirm("Are you sure you want to delete this product?")) return;
-
-        try {
-            const res = await fetch(`http://localhost:8000/products/${id}/`, {
-                method: "DELETE",
-                credentials: "include",
-            });
-
-            if (res.ok) {
-                setProducts(prev => prev.filter(p => p.id !== id));
+    const handleDelete = (id) => {
+        confirmAction({
+            title: 'Supprimer le produit',
+            description: 'Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.',
+            confirmText: 'Supprimer',
+            cancelText: 'Annuler',
+            variant: 'danger',
+            onConfirm: async () => {
+                try {
+                    const res = await fetch(`http://localhost:8000/products/${id}/`, {
+                        method: "DELETE",
+                        credentials: "include",
+                    });
+                    if (res.ok) {
+                        setProducts(prev => prev.filter(p => p.id !== id));
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
             }
-        } catch (err) {
-            console.error(err);
-        }
+        });
     };
     const handleEdit = (product) => {
         setEditingProduct(product);
@@ -230,8 +238,26 @@ export default function VendorProductsPage() {
                     setShowModal={setShowModal}
                     product={editingProduct}
                     isEdit={isEditing}
+                    refreshProducts={(newProduct, isEdit) => {
+                        if (isEdit) {
+                            setProducts(prev => prev.map(p => p.id === newProduct.id ? {
+                                ...p,
+                                ...newProduct,
+                                status: newProduct.quantite_stock > 10 ? "En stock" : newProduct.quantite_stock > 0 ? "Faible stock" : "Rupture de stock",
+                                statusColor: newProduct.quantite_stock > 10 ? 'text-emerald-600 dark:text-emerald-400' : newProduct.quantite_stock > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400',
+                                dotColor: newProduct.quantite_stock > 10 ? 'bg-emerald-500' : newProduct.quantite_stock > 0 ? 'bg-amber-500' : 'bg-rose-500',
+                            } : p));
+                        } else {
+                            setProducts(prev => [...prev, {
+                                ...newProduct,
+                                status: newProduct.quantite_stock > 10 ? "En stock" : newProduct.quantite_stock > 0 ? "Faible stock" : "Rupture de stock",
+                                statusColor: newProduct.quantite_stock > 10 ? 'text-emerald-600 dark:text-emerald-400' : newProduct.quantite_stock > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400',
+                                dotColor: newProduct.quantite_stock > 10 ? 'bg-emerald-500' : newProduct.quantite_stock > 0 ? 'bg-amber-500' : 'bg-rose-500',
+                            }]);
+                        }
+                    }}
                 />
-
+                {dialog}
             </div>
         </>
     )

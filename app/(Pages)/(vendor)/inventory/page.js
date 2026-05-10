@@ -264,7 +264,7 @@ export default function VendorInventoryPage() {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-bold mb-1.5">Price ($)</label>
-                                        <input className="w-full rounded-lg border-[#728764]/20 focus:ring-[#81e240] focus:border-[#81e240]" placeholder="0.00" type="number" />
+                                        <input className="w-full rounded-lg border-[#728764]/20 focus:ring-[#81e240] focus:border-[#81e240]" placeholder="0.00" type="number" min="0" step="0.01" />
                                     </div>
                                 </div>
                                 <div className="flex justify-end gap-3 pt-4">

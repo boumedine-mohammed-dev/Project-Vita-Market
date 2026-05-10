@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { useClientStore } from "@/app/Store/useClientStore"
 import { useAuthStore } from "@/app/Store/useAuthStore"
+import { toast } from "react-toastify"
 
 function Stars({ count, total = 5, size = "text-sm" }) {
     const rating = parseFloat(count) || 0;
@@ -83,7 +84,7 @@ export default function ProductDetailsPage() {
     const toggleFavori = async () => {
         const user = useAuthStore.getState().user;
         if (!user) {
-            alert("Vous n'êtes pas authentifié");
+            toast.error("Vous n'êtes pas authentifié");
             return;
         }
 
@@ -518,25 +519,6 @@ export default function ProductDetailsPage() {
                                         </div>
                                     </div>
                                 ))}
-                            </div>
-
-                            {/* Share */}
-                            <div className="p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-                                <h4 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">Partager</h4>
-                                <div className="flex gap-3">
-                                    {[
-                                        { icon: "share", label: "Copier le lien" },
-                                        { icon: "public", label: "Web" },
-                                    ].map(({ icon, label }) => (
-                                        <button
-                                            key={icon}
-                                            className="flex-1 flex flex-col items-center gap-1 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-primary/10 hover:text-primary transition-colors text-slate-500"
-                                        >
-                                            <span className="material-symbols-outlined text-lg">{icon}</span>
-                                            <span className="text-[10px] font-bold">{label}</span>
-                                        </button>
-                                    ))}
-                                </div>
                             </div>
 
                             {/* Back to products */}

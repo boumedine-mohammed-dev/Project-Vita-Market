@@ -118,12 +118,7 @@ export default function NavbarVendorTop() {
                     {todayCapitalized}
                 </div>
 
-                <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
 
-                {/* Chat */}
-                <button className="p-2 text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center justify-center">
-                    <span className="material-symbols-outlined">chat_bubble</span>
-                </button>
 
                 {/* Notifications */}
                 <div className="relative">

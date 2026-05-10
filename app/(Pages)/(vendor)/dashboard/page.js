@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { toast } from "react-toastify";
+import { useConfirmDialog } from '../../components/AlertDialog'
 import {
     Chart as ChartJS,
     CategoryScale, LinearScale, PointElement,
@@ -73,6 +75,7 @@ function StatusBadge({ statut }) {
 function OrderMenu({ order, onUpdated, onDeleted, onClose }) {
     const [loading, setLoading] = useState(false)
     const [deleting, setDeleting] = useState(false)
+    const { dialog, confirmAction } = useConfirmDialog()
     const statuses = Object.keys(statusConfig)
     const currentStatut = order.lignes?.[0]?.statut ?? order.statut
     const isCancelled = currentStatut === 'annulee'
@@ -82,7 +85,22 @@ function OrderMenu({ order, onUpdated, onDeleted, onClose }) {
         if (newStatus === currentStatut) { onClose(); return }
 
         if (newStatus === 'annulee') {
-            if (!confirm('Êtes-vous sûr de vouloir annuler cette commande ? Le stock sera restauré et cette action est irréversible.')) return
+            confirmAction({
+                title: 'Annuler la commande',
+                description: 'Êtes-vous sûr de vouloir annuler cette commande ? Le stock sera restauré et cette action est irréversible.',
+                confirmText: 'Oui, annuler',
+                cancelText: 'Non',
+                variant: 'danger',
+                onConfirm: async () => {
+                    setLoading(true)
+                    try {
+                        await patchLignes(order.lignes, newStatus)
+                        onUpdated(order.id, newStatus); onClose()
+                    } catch (e) { console.error(e) }
+                    finally { setLoading(false) }
+                }
+            })
+            return
         }
 
         setLoading(true)
@@ -93,73 +111,84 @@ function OrderMenu({ order, onUpdated, onDeleted, onClose }) {
         finally { setLoading(false) }
     }
 
-    const handleDelete = async () => {
-        if (!confirm('Masquer cette commande de votre tableau de bord ?')) return
-        setDeleting(true)
-        try {
-            const res = await fetch(`http://localhost:8000/commandes/${order.id}/delete_for_vendor/`, {
-                method: 'PATCH', credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-            })
-            if (!res.ok) {
-                const data = await res.json()
-                alert(data.error ?? 'Erreur')
-                return
+    const handleDelete = () => {
+        confirmAction({
+            title: 'Masquer la commande',
+            description: 'Masquer cette commande de votre tableau de bord ?',
+            confirmText: 'Masquer',
+            cancelText: 'Annuler',
+            variant: 'warning',
+            onConfirm: async () => {
+                setDeleting(true)
+                try {
+                    const res = await fetch(`http://localhost:8000/commandes/${order.id}/delete_for_vendor/`, {
+                        method: 'PATCH', credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                    })
+                    if (!res.ok) {
+                        const data = await res.json()
+                        toast.error(data.error ?? 'Erreur')
+                        return
+                    }
+                    onDeleted(order.id); onClose()
+                } catch (e) { console.error(e) }
+                finally { setDeleting(false) }
             }
-            onDeleted(order.id); onClose()
-        } catch (e) { console.error(e) }
-        finally { setDeleting(false) }
+        })
     }
 
     return (
-        <div className="absolute right-0 top-8 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl w-56 overflow-hidden">
-            {isCancelled ? (
-                /* ── Locked: already cancelled ── */
-                <div className="p-4 flex flex-col gap-2">
-                    <div className="flex items-center gap-2 text-red-500">
-                        <span className="material-symbols-outlined text-base">block</span>
-                        <p className="text-xs font-bold">Commande annulée</p>
+        <>
+            <div className="absolute right-0 top-8 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl w-56 overflow-hidden">
+                {isCancelled ? (
+                    /* ── Locked: already cancelled ── */
+                    <div className="p-4 flex flex-col gap-2">
+                        <div className="flex items-center gap-2 text-red-500">
+                            <span className="material-symbols-outlined text-base">block</span>
+                            <p className="text-xs font-bold">Commande annulée</p>
+                        </div>
+                        <p className="text-[11px] text-slate-400 leading-relaxed">
+                            Le statut d&apos;une commande annulée ne peut plus être modifié.
+                        </p>
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                        Le statut d&apos;une commande annulée ne peut plus être modifié.
-                    </p>
-                </div>
-            ) : (
-                <>
-                    <p className="px-4 pt-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                        {loading ? 'Mise à jour…' : 'Changer le statut'}
-                    </p>
-                    <div className="p-1">
-                        {statuses.map((s) => {
-                            const isCurrent = s === currentStatut
-                            return (
-                                <button key={s} onClick={() => handleChange(s)} disabled={loading || isCurrent}
-                                    className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50
+                ) : (
+                    <>
+                        <p className="px-4 pt-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                            {loading ? 'Mise à jour…' : 'Changer le statut'}
+                        </p>
+                        <div className="p-1">
+                            {statuses.map((s) => {
+                                const isCurrent = s === currentStatut
+                                return (
+                                    <button key={s} onClick={() => handleChange(s)} disabled={loading || isCurrent}
+                                        className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50
                                         ${isCurrent ? 'bg-slate-50 dark:bg-slate-800 cursor-default' : 'hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer'}`}>
-                                    <StatusBadge statut={s} />
-                                    {isCurrent && <span className="material-symbols-outlined text-primary text-sm">check</span>}
-                                </button>
-                            )
-                        })}
-                    </div>
-                </>
-            )}
-            {canDelete && (
-                <>
-                    <div className="mx-3 my-1 border-t border-slate-100 dark:border-slate-800" />
-                    <div className="p-1 pb-2">
-                        <button
-                            onClick={handleDelete}
-                            disabled={deleting}
-                            className="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors disabled:opacity-50"
-                        >
-                            <span className="material-symbols-outlined text-base">delete_outline</span>
-                            {deleting ? 'Suppression…' : 'Masquer la commande'}
-                        </button>
-                    </div>
-                </>
-            )}
-        </div>
+                                        <StatusBadge statut={s} />
+                                        {isCurrent && <span className="material-symbols-outlined text-primary text-sm">check</span>}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </>
+                )}
+                {canDelete && (
+                    <>
+                        <div className="mx-3 my-1 border-t border-slate-100 dark:border-slate-800" />
+                        <div className="p-1 pb-2">
+                            <button
+                                onClick={handleDelete}
+                                disabled={deleting}
+                                className="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors disabled:opacity-50"
+                            >
+                                <span className="material-symbols-outlined text-base">delete_outline</span>
+                                {deleting ? 'Suppression…' : 'Masquer la commande'}
+                            </button>
+                        </div>
+                    </>
+                )}
+            </div>
+            {dialog}
+        </>
     )
 }
 
@@ -343,13 +372,9 @@ function OrderModal({ order, onClose, onStatusUpdated }) {
                     <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 overflow-hidden">
                         <div className="divide-y divide-slate-100 dark:divide-slate-700">
                             <div className="px-5 py-3 flex justify-between text-sm">
-                                <span className="text-slate-500">Sous-total</span>
-                                <span className="font-medium">{fmt(order.sous_total)} دج</span>
-                            </div>
-                            <div className="px-5 py-3 flex justify-between text-sm">
                                 <span className="text-slate-500">Livraison</span>
-                                <span className={`font-medium ${parseFloat(order.frais_livraison ?? 0) === 0 ? 'text-primary' : ''}`}>
-                                    {parseFloat(order.frais_livraison ?? 0) === 0 ? 'Gratuite' : `${fmt(order.frais_livraison)} دج`}
+                                <span className="font-medium">
+                                    {fmt(order.frais_livraison)} دج
                                 </span>
                             </div>
                             <div className="px-5 py-4 flex justify-between font-bold text-base">
@@ -418,8 +443,8 @@ export default function VendorDashboardPage() {
     }, [period])
 
     useEffect(() => {
-        const fetchOrders = async () => {
-            setLoadingOrders(true)
+        const fetchOrders = async (isBackground = false) => {
+            if (!isBackground) setLoadingOrders(true);
             try {
                 const res = await fetch("http://localhost:8000/commandes/vendeur/?limit=10", { credentials: "include" })
                 if (res.ok) {
@@ -427,9 +452,11 @@ export default function VendorDashboardPage() {
                     setRecentOrders(Array.isArray(data) ? data : data.results ?? [])
                 }
             } catch (err) { console.error(err) }
-            finally { setLoadingOrders(false) }
+            finally { if (!isBackground) setLoadingOrders(false); }
         }
         fetchOrders()
+        const intervalId = setInterval(() => fetchOrders(true), 5000);
+        return () => clearInterval(intervalId);
     }, [])
 
     useEffect(() => {
@@ -575,7 +602,7 @@ export default function VendorDashboardPage() {
                                     <h4 className="text-lg font-bold">Commandes récentes</h4>
                                     <p className="text-sm text-slate-500 mt-0.5">Les 10 dernières commandes reçues</p>
                                 </div>
-                                <a href="/dashboard/orders"
+                                <a href="/orders"
                                     className="text-sm font-semibold text-primary hover:underline flex items-center gap-1">
                                     Voir toutes
                                     <span className="material-symbols-outlined text-sm">arrow_forward</span>
@@ -702,7 +729,7 @@ export default function VendorDashboardPage() {
                         </div>
 
                         <footer className="flex items-center justify-between text-xs text-slate-400 pt-4 pb-6">
-                            <p>© 2024 VitaMarket. Tous droits réservés.</p>
+                            <p>© 2026 VitaMarket. Tous droits réservés.</p>
                         </footer>
                     </div>
                 </main>

@@ -3,6 +3,7 @@ import { useAuthStore } from "@/app/Store/useAuthStore";
 import { useClientStore } from "@/app/Store/useClientStore";
 import Link from "next/link";
 import { useEffect, useState } from "react"
+import { toast } from "react-toastify";
 
 function ProductCard({ products, id, category_name, url, seller_name, nom, prix, quantite_stock, note_moyenne, tag }) {
   const { increment, cart, syncCart } = useClientStore();
@@ -14,7 +15,7 @@ function ProductCard({ products, id, category_name, url, seller_name, nom, prix,
     const user = useAuthStore.getState().user;
     if (!user) {
       useClientStore.getState().addToCartLocal(product, 1);
-      alert("Produit ajouté au panier (Invité) 🛒");
+      toast.success("Produit ajouté au panier (Invité) 🛒");
       return;
     }
     try {
@@ -26,13 +27,13 @@ function ProductCard({ products, id, category_name, url, seller_name, nom, prix,
       });
 
       if (!res.ok) {
-        alert("Erreur ajout panier");
+        toast.error("Erreur ajout panier");
         return;
       }
 
       await syncCart();
 
-      alert("Produit ajouté au panier 🛒");
+      toast.success("Produit ajouté au panier 🛒");
     } catch (err) {
       console.error(err);
     }

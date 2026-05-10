@@ -23,6 +23,111 @@ const WILAYAS = [
     "57 - El M'Ghair", "58 - El Meniaa",
 ];
 
+const DELIVERY_RATES = {
+    zrexpress: {
+        "31": { home: 400, desk: 370 },
+        "16": { home: 650, desk: 470 },
+        "46": { home: 650, desk: 520 },
+        "13": { home: 700, desk: 520 },
+        "22": { home: 700, desk: 520 },
+        "27": { home: 700, desk: 520 },
+        "29": { home: 700, desk: 520 },
+        "02": { home: 750, desk: 520 },
+        "14": { home: 750, desk: 520 },
+        "26": { home: 750, desk: 520 },
+        "48": { home: 750, desk: 520 },
+        "20": { home: 750, desk: 570 },
+        "05": { home: 800, desk: 520 },
+        "06": { home: 800, desk: 520 },
+        "10": { home: 800, desk: 520 },
+        "15": { home: 800, desk: 520 },
+        "18": { home: 800, desk: 520 },
+        "19": { home: 800, desk: 520 },
+        "25": { home: 800, desk: 520 },
+        "40": { home: 800, desk: 520 },
+        "41": { home: 800, desk: 520 },
+        "43": { home: 800, desk: 520 },
+        "35": { home: 800, desk: 520 },
+        "42": { home: 800, desk: 520 },
+        "12": { home: 850, desk: 520 },
+        "23": { home: 850, desk: 520 },
+        "24": { home: 850, desk: 520 },
+        "28": { home: 900, desk: 570 },
+        "03": { home: 950, desk: 670 },
+        "07": { home: 950, desk: 670 },
+        "17": { home: 950, desk: 670 },
+        "30": { home: 950, desk: 720 },
+        "39": { home: 950, desk: 720 },
+        "47": { home: 950, desk: 670 },
+        "55": { home: 950, desk: 720 },
+        "32": { home: 1000, desk: 670 },
+        "45": { home: 1000, desk: 670 },
+        "08": { home: 1050, desk: 720 },
+        "01": { home: 1400, desk: 970 },
+        "49": { home: 1400, desk: 970 },
+        "11": { home: 1600, desk: 1120 },
+    },
+    yalidin: {
+        "16": { home: 600, desk: 500 },
+        "09": { home: 700, desk: 550 },
+        "35": { home: 700, desk: 550 },
+        "42": { home: 700, desk: 550 },
+        "02": { home: 900, desk: 650 },
+        "04": { home: 900, desk: 650 },
+        "05": { home: 900, desk: 650 },
+        "06": { home: 900, desk: 650 },
+        "10": { home: 900, desk: 650 },
+        "13": { home: 900, desk: 650 },
+        "14": { home: 900, desk: 650 },
+        "15": { home: 900, desk: 650 },
+        "18": { home: 900, desk: 650 },
+        "19": { home: 900, desk: 650 },
+        "20": { home: 900, desk: 650 },
+        "21": { home: 900, desk: 650 },
+        "22": { home: 900, desk: 650 },
+        "23": { home: 900, desk: 650 },
+        "24": { home: 900, desk: 650 },
+        "25": { home: 900, desk: 650 },
+        "26": { home: 900, desk: 650 },
+        "27": { home: 900, desk: 650 },
+        "28": { home: 900, desk: 650 },
+        "29": { home: 900, desk: 650 },
+        "31": { home: 900, desk: 650 },
+        "34": { home: 900, desk: 650 },
+        "36": { home: 900, desk: 650 },
+        "38": { home: 900, desk: 650 },
+        "40": { home: 900, desk: 650 },
+        "41": { home: 900, desk: 650 },
+        "43": { home: 900, desk: 650 },
+        "44": { home: 900, desk: 650 },
+        "46": { home: 900, desk: 650 },
+        "48": { home: 900, desk: 650 },
+        "03": { home: 950, desk: 750 },
+        "07": { home: 950, desk: 750 },
+        "12": { home: 950, desk: 750 },
+        "17": { home: 950, desk: 750 },
+        "30": { home: 950, desk: 750 },
+        "39": { home: 950, desk: 750 },
+        "47": { home: 950, desk: 750 },
+        "55": { home: 950, desk: 750 },
+        "57": { home: 950, desk: 750 },
+        "58": { home: 950, desk: 750 },
+        "01": { home: 1050, desk: 850 },
+        "08": { home: 1050, desk: 850 },
+        "32": { home: 1050, desk: 850 },
+        "45": { home: 1050, desk: 850 },
+        "49": { home: 1050, desk: 850 },
+        "50": { home: 1050, desk: 850 },
+        "52": { home: 1050, desk: 850 },
+        "11": { home: 1600, desk: 1400 },
+        "33": { home: 1600, desk: 1400 },
+        "37": { home: 1600, desk: 1400 },
+        "53": { home: 1600, desk: 1400 },
+        "54": { home: 1600, desk: 1400 },
+        "56": { home: 1600, desk: 1400 },
+    }
+};
+
 export default function CheckoutPage() {
     const { cart } = useClientStore();
     const { user } = useAuthStore();
@@ -39,8 +144,6 @@ export default function CheckoutPage() {
     }, [user]);
     const lignes = cart?.lignes ?? [];
     const cartSubtotal = cart?.total ?? 0;
-    const DELIVERY_FEE = 500;
-    const grandTotal = cartSubtotal + DELIVERY_FEE;
 
     const [form, setForm] = useState({
         fullName: user?.full_name || user?.username || "",
@@ -50,7 +153,25 @@ export default function CheckoutPage() {
         wilaya: "",
         postalCode: "",
         notes: "",
+        deliveryCompany: "yalidin",
+        deliveryType: "home"
     });
+
+    const wilayaCode = form.wilaya ? form.wilaya.split(" - ")[0] : null;
+    const isZrAvailable = wilayaCode && DELIVERY_RATES.zrexpress[wilayaCode] !== undefined;
+
+    useEffect(() => {
+        if (form.wilaya && form.deliveryCompany === 'zrexpress' && !isZrAvailable) {
+            setForm(prev => ({ ...prev, deliveryCompany: 'yalidin' }));
+        }
+    }, [form.wilaya, form.deliveryCompany, isZrAvailable]);
+
+    let DELIVERY_FEE = 0;
+    if (wilayaCode && DELIVERY_RATES[form.deliveryCompany]?.[wilayaCode]) {
+        DELIVERY_FEE = DELIVERY_RATES[form.deliveryCompany][wilayaCode][form.deliveryType];
+    }
+    const grandTotal = cartSubtotal + DELIVERY_FEE;
+
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [error, setError] = useState(null);
@@ -128,7 +249,7 @@ export default function CheckoutPage() {
                     nom: form.fullName,
                     email: form.email,
                     telephone: form.phone,
-                    adresse_livraison: `${form.address}, ${form.wilaya}, ${form.postalCode}`,
+                    adresse_livraison: `${form.address}, ${form.wilaya}, ${form.postalCode} - ${form.deliveryCompany === 'yalidin' ? 'Yalidin' : 'ZR Express'} (${form.deliveryType === 'home' ? 'À domicile' : 'Bureau/Stop Desk'})`,
                     statut: "en_attente",
                     total: grandTotal,
                     sous_total: cartSubtotal,
@@ -255,7 +376,11 @@ export default function CheckoutPage() {
                                     <input
                                         name="phone"
                                         value={form.phone}
-                                        onChange={handleChange}
+                                        maxLength={10}
+                                        onChange={(e) => {
+                                            const value = e.target.value.replace(/[^0-9]/g, '');
+                                            setForm(prev => ({ ...prev, phone: value }));
+                                        }}
                                         className="w-full rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 p-3 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                                         placeholder="0555 000 000"
                                         type="tel"
@@ -305,7 +430,10 @@ export default function CheckoutPage() {
                                     <input
                                         name="postalCode"
                                         value={form.postalCode}
-                                        onChange={handleChange}
+                                        onChange={(e) => {
+                                            const value = e.target.value.replace(/[^0-9]/g, '');
+                                            setForm(prev => ({ ...prev, postalCode: value }));
+                                        }}
                                         className="w-full rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 p-3 focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                                         placeholder="ex: 31000"
                                         type="text"
@@ -313,6 +441,110 @@ export default function CheckoutPage() {
                                 </div>
                             </div>
                         </section>
+
+                        {/* Delivery Options */}
+                        {form.wilaya && (
+                            <section className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-primary">local_shipping</span>
+                                    <h3 className="text-xl font-bold">Options de livraison</h3>
+                                </div>
+                                
+                                <div className="space-y-6">
+                                    {/* Delivery Company Selection */}
+                                    <div>
+                                        <label className="block text-sm font-semibold mb-3">Société de livraison</label>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${form.deliveryCompany === 'yalidin' ? 'border-primary bg-primary/5' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}>
+                                                <input 
+                                                    type="radio" 
+                                                    name="deliveryCompany" 
+                                                    value="yalidin" 
+                                                    checked={form.deliveryCompany === 'yalidin'} 
+                                                    onChange={handleChange}
+                                                    className="hidden"
+                                                />
+                                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${form.deliveryCompany === 'yalidin' ? 'border-primary bg-primary' : 'border-slate-300'}`}>
+                                                    {form.deliveryCompany === 'yalidin' && <div className="w-2 h-2 rounded-full bg-white" />}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="font-bold text-slate-900 dark:text-white">Yalidin Express</p>
+                                                </div>
+                                            </label>
+
+                                            <label className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${!isZrAvailable ? 'opacity-50 cursor-not-allowed border-slate-100 dark:border-slate-800' : 'cursor-pointer ' + (form.deliveryCompany === 'zrexpress' ? 'border-primary bg-primary/5' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300')}`}>
+                                                <input 
+                                                    type="radio" 
+                                                    name="deliveryCompany" 
+                                                    value="zrexpress" 
+                                                    checked={form.deliveryCompany === 'zrexpress'} 
+                                                    onChange={handleChange}
+                                                    disabled={!isZrAvailable}
+                                                    className="hidden"
+                                                />
+                                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${form.deliveryCompany === 'zrexpress' ? 'border-primary bg-primary' : 'border-slate-300'}`}>
+                                                    {form.deliveryCompany === 'zrexpress' && <div className="w-2 h-2 rounded-full bg-white" />}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="font-bold text-slate-900 dark:text-white">ZR Express</p>
+                                                    {!isZrAvailable && <p className="text-[10px] text-red-500 font-semibold mt-0.5">Indisponible pour cette wilaya</p>}
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Delivery Type Selection */}
+                                    <div>
+                                        <label className="block text-sm font-semibold mb-3">Lieu de livraison</label>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${form.deliveryType === 'home' ? 'border-primary bg-primary/5' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}>
+                                                <div className="flex items-center gap-3">
+                                                    <input 
+                                                        type="radio" 
+                                                        name="deliveryType" 
+                                                        value="home" 
+                                                        checked={form.deliveryType === 'home'} 
+                                                        onChange={handleChange}
+                                                        className="hidden"
+                                                    />
+                                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${form.deliveryType === 'home' ? 'border-primary bg-primary' : 'border-slate-300'}`}>
+                                                        {form.deliveryType === 'home' && <div className="w-2 h-2 rounded-full bg-white" />}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">home</span> À domicile</p>
+                                                    </div>
+                                                </div>
+                                                {wilayaCode && DELIVERY_RATES[form.deliveryCompany]?.[wilayaCode] && (
+                                                    <span className="font-extrabold text-primary">{DELIVERY_RATES[form.deliveryCompany][wilayaCode].home} دج</span>
+                                                )}
+                                            </label>
+
+                                            <label className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${form.deliveryType === 'desk' ? 'border-primary bg-primary/5' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}>
+                                                <div className="flex items-center gap-3">
+                                                    <input 
+                                                        type="radio" 
+                                                        name="deliveryType" 
+                                                        value="desk" 
+                                                        checked={form.deliveryType === 'desk'} 
+                                                        onChange={handleChange}
+                                                        className="hidden"
+                                                    />
+                                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${form.deliveryType === 'desk' ? 'border-primary bg-primary' : 'border-slate-300'}`}>
+                                                        {form.deliveryType === 'desk' && <div className="w-2 h-2 rounded-full bg-white" />}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><span className="material-symbols-outlined text-[18px]">store</span> Bureau d'estime</p>
+                                                    </div>
+                                                </div>
+                                                {wilayaCode && DELIVERY_RATES[form.deliveryCompany]?.[wilayaCode] && (
+                                                    <span className="font-extrabold text-primary">{DELIVERY_RATES[form.deliveryCompany][wilayaCode].desk} دج</span>
+                                                )}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                        )}
 
                         {/* Payment Method — Cash only */}
                         <section className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -422,9 +654,9 @@ export default function CheckoutPage() {
 
                             <p className="text-xs text-slate-500 px-2 leading-relaxed text-center">
                                 En passant votre commande, vous acceptez nos{" "}
-                                <a className="underline text-primary" href="#">Conditions d'utilisation</a>
+                                <Link className="underline text-primary" href="/cgu">Conditions d'utilisation</Link>
                                 {" "}et notre{" "}
-                                <a className="underline text-primary" href="#">Politique de confidentialité</a>.
+                                <Link className="underline text-primary" href="/cgu">Politique de confidentialité</Link>.
                             </p>
                         </div>
                     </div>

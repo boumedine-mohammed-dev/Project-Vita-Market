@@ -199,7 +199,7 @@ export default function CartPage() {
                                         <a className="font-bold text-primary hover:underline" href="#">
                                             Connexion / Inscription
                                         </a>
-                                        <p className="text-slate-500">Sauvegardez vos articles &amp; gagnez des points</p>
+                                        <p className="text-slate-500">Sauvegardez vos articles</p>
                                     </div>
                                 </div>
                             </div>
@@ -208,8 +208,6 @@ export default function CartPage() {
                             <div className="mt-6 pt-6 border-t border-primary/10 flex flex-wrap justify-center gap-4 opacity-60 hover:opacity-100 transition-all duration-500">
                                 {[
                                     { icon: "verified_user", label: "Sécurisé" },
-                                    { icon: "local_florist", label: "Bio" },
-                                    { icon: "support_agent", label: "Support" },
                                     { icon: "payments", label: "Sans frais" },
                                 ].map(({ icon, label }) => (
                                     <div key={label} className="flex flex-col items-center">

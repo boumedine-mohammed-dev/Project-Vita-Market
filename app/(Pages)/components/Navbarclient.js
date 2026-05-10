@@ -5,6 +5,7 @@ import { useClientStore } from "@/app/Store/useClientStore";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
+import { toast } from "react-toastify";
 
 const getCategoryIcon = (nom = "") => {
   const n = nom.toLowerCase();
@@ -76,6 +77,14 @@ export default function Navbar() {
     logout();
     navigate.push('/');
   }
+
+  const handleFavoriteClick = () => {
+    if (!user) {
+      toast.info("Veuillez vous connecter pour accéder à vos favoris.");
+    } else {
+      navigate.push("/profile?tab=1");
+    }
+  };
 
   return (
     <nav className="font-display sticky top-0 z-50 bg-white/80 dark:bg-[#182111]/80 backdrop-blur-md border-b border-primary/10">
@@ -220,13 +229,15 @@ export default function Navbar() {
               )}
             </div>
 
-            <a className="text-sm font-semibold hover:text-primary transition-colors" href="#">Notre histoire</a>
+            <Link className="text-sm font-semibold hover:text-primary transition-colors" href="/notrehistoire">Notre histoire</Link>
+            <Link className="text-sm font-semibold hover:text-primary transition-colors" href="/products">Nos produits</Link>
+            <Link className="text-sm font-semibold hover:text-primary transition-colors mr-10" href="/vendezsurvitamarket">Vendez sur Vita Market</Link>
           </div>
 
           {/* Actions */}
           <div className="flex items-center gap-4">
             <div className="flex gap-2">
-              <button className="cursor-pointer flex size-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-[#81e240]/20 hover:text-[#81e240] transition-all">
+              <button onClick={handleFavoriteClick} className="cursor-pointer flex size-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-[#81e240]/20 hover:text-[#81e240] transition-all">
                 <span className="material-symbols-outlined text-[20px]">favorite</span>
               </button>
               <Link href="/cart">

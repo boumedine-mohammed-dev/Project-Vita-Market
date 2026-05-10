@@ -2,8 +2,11 @@
 import { useAuthStore } from '@/app/Store/useAuthStore'
 import Head from 'next/head'
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useClientStore } from "@/app/Store/useClientStore";
 import jsPDF from "jspdf"
+import { toast } from "react-toastify";
+import { useConfirmDialog } from '../../components/AlertDialog'
 const tabs = [
     { icon: 'package_2', label: 'Mes commandes' },
     { icon: 'favorite', label: 'Liste de souhaits' },
@@ -30,7 +33,7 @@ const STEPS = [
     { key: 'en_preparation', label: 'En prép.' },
     { key: 'expediee', label: 'Expédiée' },
     { key: 'livree', label: 'Livrée' },
-    { key: 'collectee', label: 'Collectée' },
+    { key: 'collecteee', label: 'Collectée' },
 ]
 
 // helpers that operate on the array of lignes (no global commande.statut)
@@ -223,10 +226,56 @@ function EditProfileModal({ user, onClose, onSaved }) {
         adresse_livraison: user?.info?.adresse_livraison ?? '',
     })
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState('')
+    const [errors, setErrors] = useState({})
+
+    // Password change state
+    const [showPasswordChange, setShowPasswordChange] = useState(false)
+    const [oldPassword, setOldPassword] = useState('')
+    const [newPassword, setNewPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
+    const [passLoading, setPassLoading] = useState(false)
+    const [passSuccess, setPassSuccess] = useState(false)
+    const [passErrors, setPassErrors] = useState({})
+
+    const handlePasswordChange = async () => {
+        if (!oldPassword || !newPassword || !confirmPassword) {
+            setPassErrors({ global: "Veuillez remplir tous les champs" });
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            setPassErrors({ confirm_password: "Les mots de passe ne correspondent pas" });
+            return;
+        }
+        setPassLoading(true);
+        setPassSuccess(false);
+        setPassErrors({});
+        try {
+            const res = await fetch("http://localhost:8000/auth/me/change-password/", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setPassErrors(typeof data === 'object' ? data : { global: data });
+                return;
+            }
+            setPassSuccess(true);
+            setOldPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+            toast.success("Mot de passe modifié avec succès !");
+            setTimeout(() => setShowPasswordChange(false), 2000);
+        } catch (e) {
+            setPassErrors({ global: e.message });
+        } finally {
+            setPassLoading(false);
+        }
+    }
 
     const handleSubmit = async () => {
-        setLoading(true); setError('')
+        setLoading(true); setErrors({})
         try {
             const res = await fetch('http://localhost:8000/auth/me/update/', {
                 method: 'PATCH', credentials: 'include',
@@ -234,12 +283,26 @@ function EditProfileModal({ user, onClose, onSaved }) {
                 body: JSON.stringify(form),
             })
             const data = await res.json()
-            console.log(data)
-            if (!res.ok) throw new Error(data.error)
+            if (!res.ok) {
+                setErrors(typeof data === 'object' ? data : { global: data });
+                return;
+            }
             onSaved(data); onClose()
-        } catch (e) { setError(e.message) }
+        } catch (e) { setErrors({ global: e.message }) }
         finally { setLoading(false) }
     }
+
+    const getFieldError = (fieldName) => {
+        const err = errors[fieldName];
+        if (!err) return null;
+        return Array.isArray(err) ? err[0] : err;
+    };
+
+    const getPassError = (fieldName) => {
+        const err = passErrors[fieldName];
+        if (!err) return null;
+        return Array.isArray(err) ? err[0] : err;
+    };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 font-display">
@@ -259,14 +322,84 @@ function EditProfileModal({ user, onClose, onSaved }) {
                     ].map(({ name, label, type = 'text' }) => (
                         <div key={name}>
                             <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">{label}</label>
-                            <input type={type} value={form[name]}
-                                onChange={(e) => setForm((f) => ({ ...f, [name]: e.target.value }))}
-                                className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                            <input
+                                type={type}
+                                value={form[name]}
+                                maxLength={name === 'telephone' ? 10 : undefined}
+                                onChange={(e) => {
+                                    let value = e.target.value;
+                                    if (name === 'telephone') {
+                                        value = value.replace(/[^0-9]/g, '');
+                                    }
+                                    setForm((f) => ({ ...f, [name]: value }));
+                                }}
+                                className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border ${getFieldError(name) ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all`}
                             />
+                            {getFieldError(name) && <p className="mt-1 text-[10px] text-red-500 font-bold ml-1">{getFieldError(name)}</p>}
                         </div>
                     ))}
                 </div>
-                {error && <p className="mt-4 text-xs text-red-500 font-medium">{error}</p>}
+
+                {/* Password Change Toggle */}
+                <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                        onClick={() => setShowPasswordChange(!showPasswordChange)}
+                        className="flex items-center gap-2 text-sm font-bold text-primary hover:underline transition-all"
+                    >
+                        <span className="material-symbols-outlined text-base">
+                            {showPasswordChange ? 'keyboard_arrow_up' : 'lock_reset'}
+                        </span>
+                        {showPasswordChange ? 'Annuler le changement de mot de passe' : 'Changer le mot de passe'}
+                    </button>
+
+                    {showPasswordChange && (
+                        <div className="mt-4 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div>
+                                <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Ancien mot de passe</label>
+                                <input type="password" value={oldPassword}
+                                    onChange={(e) => setOldPassword(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Nouveau</label>
+                                    <input type="password" value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border ${getPassError('new_password') ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all`}
+                                    />
+                                    {getPassError('new_password') && <p className="mt-1 text-[10px] text-red-500 font-bold ml-1">{getPassError('new_password')}</p>}
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Confirmer</label>
+                                    <input type="password" value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border ${getPassError('confirm_password') ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'} rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all`}
+                                    />
+                                    {getPassError('confirm_password') && <p className="mt-1 text-[10px] text-red-500 font-bold ml-1">{getPassError('confirm_password')}</p>}
+                                </div>
+                            </div>
+                            {(getPassError('old_password') || getPassError('global')) && (
+                                <p className="text-[10px] text-red-500 font-bold ml-1">
+                                    {getPassError('old_password') || getPassError('global')}
+                                </p>
+                            )}
+                            <button
+                                onClick={handlePasswordChange}
+                                disabled={passLoading}
+                                className="w-full py-2 bg-primary/10 text-primary hover:bg-primary/20 text-xs font-black uppercase tracking-widest rounded-lg transition-all disabled:opacity-50"
+                            >
+                                {passLoading ? 'Chargement...' : 'Confirmer le changement'}
+                            </button>
+                        </div>
+                    )}
+                </div>
+                {errors.global && (
+                    <div className="mt-4 p-2.5 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/50 rounded-lg flex items-center gap-2">
+                        <span className="material-symbols-outlined text-red-500 text-sm">error</span>
+                        <p className="text-xs text-red-600 dark:text-red-400 font-bold">{errors.global}</p>
+                    </div>
+                )}
                 <div className="flex gap-3 mt-6">
                     <button onClick={onClose} className="flex-1 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">Annuler</button>
                     <button onClick={handleSubmit} disabled={loading} className="flex-1 py-2.5 rounded-lg bg-primary text-slate-900 text-sm font-bold hover:brightness-105 transition-all disabled:opacity-60">
@@ -282,35 +415,52 @@ function EditProfileModal({ user, onClose, onSaved }) {
 function OrderActionsMenu({ commande, onCancel, onDelete, onClose }) {
     const [cancelling, setCancelling] = useState(false)
     const [deleting, setDeleting] = useState(false)
+    const { dialog, confirmAction } = useConfirmDialog()
 
     // Cancellable if at least one line is not yet shipped/delivered
     const canCancel = commande.lignes?.some(l => ['en_attente', 'confirmee', 'en_preparation'].includes(l.statut))
     const canDelete = isDeletable(commande.lignes)
 
-    const handleCancel = async () => {
-        if (!confirm('Êtes-vous sûr de vouloir annuler cette commande ? Cette action est irréversible.')) return
-        setCancelling(true)
-        try {
-            await fetch(`http://localhost:8000/commandes/${commande.id}/cancel/`, {
-                method: 'POST', credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-            })
-            onCancel(commande.id); onClose()
-        } catch (e) { console.error(e) }
-        finally { setCancelling(false) }
+    const handleCancel = () => {
+        confirmAction({
+            title: 'Annuler la commande',
+            description: 'Êtes-vous sûr de vouloir annuler cette commande ? Cette action est irréversible.',
+            confirmText: 'Oui, annuler',
+            cancelText: 'Non',
+            variant: 'danger',
+            onConfirm: async () => {
+                setCancelling(true)
+                try {
+                    await fetch(`http://localhost:8000/commandes/${commande.id}/cancel/`, {
+                        method: 'POST', credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                    })
+                    onCancel(commande.id); onClose()
+                } catch (e) { console.error(e) }
+                finally { setCancelling(false) }
+            }
+        })
     }
 
-    const handleDelete = async () => {
-        if (!confirm('Supprimer définitivement cette commande ?')) return
-        setDeleting(true)
-        try {
-            await fetch(`http://localhost:8000/commandes/${commande.id}/delete_for_client/`, {
-                method: 'PATCH',
-                credentials: 'include',
-            })
-            onDelete(commande.id); onClose()
-        } catch (e) { console.error(e) }
-        finally { setDeleting(false) }
+    const handleDelete = () => {
+        confirmAction({
+            title: 'Supprimer la commande',
+            description: 'Supprimer définitivement cette commande ?',
+            confirmText: 'Supprimer',
+            cancelText: 'Annuler',
+            variant: 'danger',
+            onConfirm: async () => {
+                setDeleting(true)
+                try {
+                    await fetch(`http://localhost:8000/commandes/${commande.id}/delete_for_client/`, {
+                        method: 'PATCH',
+                        credentials: 'include',
+                    })
+                    onDelete(commande.id); onClose()
+                } catch (e) { console.error(e) }
+                finally { setDeleting(false) }
+            }
+        })
     }
 
     const handleFacture = () => {
@@ -359,41 +509,44 @@ function OrderActionsMenu({ commande, onCancel, onDelete, onClose }) {
             window.open(url)
 
         } catch (e) {
-            alert("Erreur génération facture: " + e.message)
+            toast.error("Erreur génération facture: " + e.message)
         }
 
         onClose()
     }
 
     return (
-        <div className="absolute right-0 top-10 z-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl w-52 overflow-hidden">
-            <div className="p-1">
-                {/* Voir la facture — always available */}
-                <button onClick={handleFacture}
-                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors">
-                    <span className="material-symbols-outlined text-base text-slate-500">receipt_long</span>
-                    Voir la facture
-                </button>
-
-                {/* Cancel — only if at least one line is en_attente */}
-                {canCancel && (
-                    <button onClick={handleCancel} disabled={cancelling}
-                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-sm font-medium text-red-500 transition-colors disabled:opacity-60">
-                        <span className="material-symbols-outlined text-base">cancel</span>
-                        {cancelling ? 'Annulation...' : 'Annuler la commande'}
+        <>
+            <div className="absolute right-0 top-10 z-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl w-52 overflow-hidden">
+                <div className="p-1">
+                    {/* Voir la facture — always available */}
+                    <button onClick={handleFacture}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300 transition-colors">
+                        <span className="material-symbols-outlined text-base text-slate-500">receipt_long</span>
+                        Voir la facture
                     </button>
-                )}
 
-                {/* Delete — only when all lines are terminal */}
-                {canDelete && (
-                    <button onClick={handleDelete} disabled={deleting}
-                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-sm font-medium text-red-500 transition-colors disabled:opacity-60">
-                        <span className="material-symbols-outlined text-base">delete_outline</span>
-                        {deleting ? 'Suppression...' : 'Supprimer la commande'}
-                    </button>
-                )}
+                    {/* Cancel — only if at least one line is en_attente */}
+                    {canCancel && (
+                        <button onClick={handleCancel} disabled={cancelling}
+                            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-sm font-medium text-red-500 transition-colors disabled:opacity-60">
+                            <span className="material-symbols-outlined text-base">cancel</span>
+                            {cancelling ? 'Annulation...' : 'Annuler la commande'}
+                        </button>
+                    )}
+
+                    {/* Delete — only when all lines are terminal */}
+                    {canDelete && (
+                        <button onClick={handleDelete} disabled={deleting}
+                            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-sm font-medium text-red-500 transition-colors disabled:opacity-60">
+                            <span className="material-symbols-outlined text-base">delete_outline</span>
+                            {deleting ? 'Suppression...' : 'Supprimer la commande'}
+                        </button>
+                    )}
+                </div>
             </div>
-        </div>
+            {dialog}
+        </>
     )
 }
 
@@ -469,7 +622,7 @@ function VendeurBlock({ group, canReview, reviewedIds, onReview }) {
             {/* Line items */}
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 {group.lignes.map((ligne) => {
-                    const reviewed = reviewedIds.has(ligne.id)
+                    const reviewed = reviewedIds.has(ligne.id) || ligne.has_avis
                     const lineReviewable = ['collectee'].includes(ligne.statut)
                     return (
                         <div key={ligne.id} className="p-5 flex gap-4 items-center">
@@ -587,13 +740,9 @@ function OrderDetail({ commande, onBack }) {
             <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm overflow-hidden border border-slate-100 dark:border-slate-800">
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
                     <div className="px-6 py-4 flex justify-between text-sm">
-                        <span className="text-slate-500">Sous-total</span>
-                        <span className="font-medium">{fmt(commande.sous_total)} دج</span>
-                    </div>
-                    <div className="px-6 py-4 flex justify-between text-sm">
                         <span className="text-slate-500">Livraison</span>
-                        <span className={`font-medium ${parseFloat(commande.frais_livraison ?? 0) === 0 ? 'text-primary' : ''}`}>
-                            {parseFloat(commande.frais_livraison ?? 0) === 0 ? 'Gratuite' : `${fmt(commande.frais_livraison)} دج`}
+                        <span className="font-medium">
+                            {fmt(commande.frais_livraison)} دج
                         </span>
                     </div>
                     <div className="px-6 py-4 flex justify-between font-bold">
@@ -622,7 +771,9 @@ function OrderDetail({ commande, onBack }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ProfilePage() {
-    const [activeTab, setActiveTab] = useState(0)
+    const searchParams = useSearchParams()
+    const initialTab = searchParams.get('tab') ? parseInt(searchParams.get('tab'), 10) : 0
+    const [activeTab, setActiveTab] = useState(initialTab)
     const { user, setUser } = useAuthStore()
     const { cart, syncCart } = useClientStore()
     console.log(user)
@@ -698,13 +849,13 @@ export default function ProfilePage() {
             });
 
             if (!res.ok) {
-                alert("Erreur ajout panier");
+                toast.error("Erreur ajout panier");
                 return;
             }
 
             await syncCart();
 
-            alert("Produit ajouté au panier 🛒");
+            toast.success("Produit ajouté au panier 🛒");
         } catch (err) {
             console.error(err);
         }

@@ -30,15 +30,25 @@ export default function EcoVendorStoreSettings() {
     const [phone, setPhone] = useState(user?.telephone ?? "");
     const [email, setEmail] = useState(user?.email ?? "");
     const [username, setUsername] = useState(user?.username ?? "");
+    const [nom, setNom] = useState(user?.nom ?? "");
+    const [prenom, setPrenom] = useState(user?.prenom ?? "");
     console.log(username);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
-    const [error, setError] = useState("");
+    const [errors, setErrors] = useState({});
+
+    // Password change state
+    const [oldPassword, setOldPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [passLoading, setPassLoading] = useState(false);
+    const [passSuccess, setPassSuccess] = useState(false);
+    const [passErrors, setPassErrors] = useState({});
 
     const handleSave = async () => {
         setLoading(true);
         setSuccess(false);
-        setError("");
+        setErrors({});
         try {
             // Update main user fields
             const userRes = await fetch("http://localhost:8000/auth/me/update/", {
@@ -46,22 +56,24 @@ export default function EcoVendorStoreSettings() {
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    telephone: phone, email, username, nom_boutique: storeName,
+                    telephone: phone, email, username,
+                    nom, prenom,
+                    nom_boutique: storeName,
                     description: storeDesc,
                     adresse_boutique: storeAddress,
                 }),
             });
 
-            if (!userRes.ok) throw new Error("Erreur mise à jour utilisateur");
+            const data = await userRes.json();
+            if (!userRes.ok) {
+                setErrors(typeof data === 'object' ? data : { global: "Erreur mise à jour" });
+                return;
+            }
 
-            // Update vendor profile fields
-
-
-            const updatedUser = await userRes.json();
-            setUser({ ...user, ...updatedUser, info: { ...info, nom_boutique: storeName, description: storeDesc, adresse_boutique: storeAddress } });
+            setUser({ ...user, ...data, info: { ...info, nom_boutique: storeName, description: storeDesc, adresse_boutique: storeAddress } });
             setSuccess(true);
         } catch (e) {
-            setError(e.message);
+            setErrors({ global: e.message });
         } finally {
             setLoading(false);
         }
@@ -74,8 +86,57 @@ export default function EcoVendorStoreSettings() {
         setPhone(user?.telephone ?? "");
         setEmail(user?.email ?? "");
         setUsername(user?.username ?? "");
+        setNom(user?.nom ?? "");
+        setPrenom(user?.prenom ?? "");
         setSuccess(false);
-        setError("");
+        setErrors({});
+    };
+
+    const handlePasswordChange = async () => {
+        if (!oldPassword || !newPassword || !confirmPassword) {
+            setPassErrors({ global: "Veuillez remplir tous les champs" });
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            setPassErrors({ confirm_password: "Les mots de passe ne correspondent pas" });
+            return;
+        }
+        setPassLoading(true);
+        setPassSuccess(false);
+        setPassErrors({});
+        try {
+            const res = await fetch("http://localhost:8000/auth/me/change-password/", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setPassErrors(typeof data === 'object' ? data : { global: data });
+                return;
+            }
+            setPassSuccess(true);
+            setOldPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
+        } catch (e) {
+            setPassErrors({ global: e.message });
+        } finally {
+            setPassLoading(false);
+        }
+    };
+
+    const getFieldError = (fieldName) => {
+        const err = errors[fieldName];
+        if (!err) return null;
+        return Array.isArray(err) ? err[0] : err;
+    };
+
+    const getPassError = (fieldName) => {
+        const err = passErrors[fieldName];
+        if (!err) return null;
+        return Array.isArray(err) ? err[0] : err;
     };
 
     // Statut badge
@@ -140,7 +201,7 @@ export default function EcoVendorStoreSettings() {
                                 <div style={{ textAlign: "right", fontSize: 12, color: "#94a3b8" }}>
                                     <p>Membre depuis</p>
                                     <p style={{ fontWeight: 700, color: "#64748b" }}>
-                                        {user?.date_joined ? new Date(user.date_joined).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }) : "—"}
+                                        {user?.info?.created_at ? new Date(user.info.created_at).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }) : "—"}
                                     </p>
                                 </div>
                             </div>
@@ -149,8 +210,8 @@ export default function EcoVendorStoreSettings() {
                         {/* ── Store Branding ── */}
                         <section style={sectionStyle}>
                             <div style={{ marginBottom: 24 }}>
-                                <h3 style={sectionTitle}>Store Branding</h3>
-                                <p style={sectionSub}>Manage how your brand appears to customers.</p>
+                                <h3 style={sectionTitle}>Identité de la boutique</h3>
+                                <p style={sectionSub}>Gérez l’apparence de votre marque auprès des clients.</p>
                             </div>
                             <div style={{ display: "flex", alignItems: "flex-start", gap: 32 }}>
                                 {/* Logo Upload */}
@@ -167,25 +228,27 @@ export default function EcoVendorStoreSettings() {
                                 {/* Fields */}
                                 <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 24 }}>
                                     <div>
-                                        <label style={labelStyle} htmlFor="store-name">Store Name</label>
+                                        <label style={labelStyle} htmlFor="store-name">Nom de la boutique</label>
                                         <input
                                             id="store-name"
                                             type="text"
                                             value={storeName}
                                             onChange={e => setStoreName(e.target.value)}
-                                            style={inputStyle}
+                                            style={{ ...inputStyle, border: getFieldError('nom_boutique') ? '1px solid #ef4444' : inputStyle.border }}
                                         />
+                                        {getFieldError('nom_boutique') && <p style={{ color: '#ef4444', fontSize: 11, fontWeight: 700, marginTop: 4 }}>{getFieldError('nom_boutique')}</p>}
                                     </div>
                                     <div>
-                                        <label style={labelStyle} htmlFor="store-desc">Store Description</label>
+                                        <label style={labelStyle} htmlFor="store-desc">Description de la boutique</label>
                                         <textarea
                                             id="store-desc"
                                             rows={4}
                                             value={storeDesc}
                                             onChange={e => setStoreDesc(e.target.value)}
                                             placeholder="Tell customers about your mission and eco-friendly products..."
-                                            style={{ ...inputStyle, resize: "none" }}
+                                            style={{ ...inputStyle, resize: "none", border: getFieldError('description') ? '1px solid #ef4444' : inputStyle.border }}
                                         />
+                                        {getFieldError('description') && <p style={{ color: '#ef4444', fontSize: 11, fontWeight: 700, marginTop: 4 }}>{getFieldError('description')}</p>}
                                     </div>
                                     <div>
                                         <label style={labelStyle} htmlFor="store-address">Adresse de la boutique</label>
@@ -198,9 +261,10 @@ export default function EcoVendorStoreSettings() {
                                                 type="text"
                                                 value={storeAddress}
                                                 onChange={e => setStoreAddress(e.target.value)}
-                                                style={{ ...inputStyle, paddingLeft: 40 }}
+                                                style={{ ...inputStyle, paddingLeft: 40, border: getFieldError('adresse_boutique') ? '1px solid #ef4444' : inputStyle.border }}
                                             />
                                         </div>
+                                        {getFieldError('adresse_boutique') && <p style={{ color: '#ef4444', fontSize: 11, fontWeight: 700, marginTop: 4 }}>{getFieldError('adresse_boutique')}</p>}
                                     </div>
                                 </div>
                             </div>
@@ -209,12 +273,12 @@ export default function EcoVendorStoreSettings() {
                         {/* ── Business Info ── */}
                         <section style={sectionStyle}>
                             <div style={{ marginBottom: 24 }}>
-                                <h3 style={sectionTitle}>Business Information</h3>
-                                <p style={sectionSub}>Essential contact and category details.</p>
+                                <h3 style={sectionTitle}>Informations de l’entreprise</h3>
+                                <p style={sectionSub}>Coordonnées et informations essentielles sur votre activité.</p>
                             </div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
                                 <div>
-                                    <label style={labelStyle} htmlFor="contact-phone">Contact Phone</label>
+                                    <label style={labelStyle} htmlFor="contact-phone">Numéro de téléphone</label>
                                     <div style={{ position: "relative" }}>
                                         <div style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}>
                                             <span className="mat-icon" style={{ fontSize: 18 }}>call</span>
@@ -222,11 +286,16 @@ export default function EcoVendorStoreSettings() {
                                         <input
                                             id="contact-phone"
                                             type="tel"
+                                            maxLength={10}
                                             value={phone}
-                                            onChange={e => setPhone(e.target.value)}
-                                            style={{ ...inputStyle, paddingLeft: 40 }}
+                                            onChange={e => {
+                                                const value = e.target.value.replace(/[^0-9]/g, '');
+                                                setPhone(value);
+                                            }}
+                                            style={{ ...inputStyle, paddingLeft: 40, border: getFieldError('telephone') ? '1px solid #ef4444' : inputStyle.border }}
                                         />
                                     </div>
+                                    {getFieldError('telephone') && <p style={{ color: '#ef4444', fontSize: 11, fontWeight: 700, marginTop: 4 }}>{getFieldError('telephone')}</p>}
                                 </div>
                                 <div>
                                     <label style={labelStyle} htmlFor="contact-email">Email</label>
@@ -239,9 +308,10 @@ export default function EcoVendorStoreSettings() {
                                             type="email"
                                             value={email}
                                             onChange={e => setEmail(e.target.value)}
-                                            style={{ ...inputStyle, paddingLeft: 40 }}
+                                            style={{ ...inputStyle, paddingLeft: 40, border: getFieldError('email') ? '1px solid #ef4444' : inputStyle.border }}
                                         />
                                     </div>
+                                    {getFieldError('email') && <p style={{ color: '#ef4444', fontSize: 11, fontWeight: 700, marginTop: 4 }}>{getFieldError('email')}</p>}
                                 </div>
                                 <div>
                                     <label style={labelStyle} htmlFor="username">Nom d'utilisateur</label>
@@ -254,29 +324,120 @@ export default function EcoVendorStoreSettings() {
                                             type="text"
                                             value={username}
                                             onChange={e => setUsername(e.target.value)}
-                                            style={{ ...inputStyle, paddingLeft: 40 }}
+                                            style={{ ...inputStyle, paddingLeft: 40, border: getFieldError('username') ? '1px solid #ef4444' : inputStyle.border }}
                                         />
                                     </div>
+                                    {getFieldError('username') && <p style={{ color: '#ef4444', fontSize: 11, fontWeight: 700, marginTop: 4 }}>{getFieldError('username')}</p>}
+                                </div>
+                                <div>
+                                    <label style={labelStyle} htmlFor="nom">Nom</label>
+                                    <input
+                                        id="nom"
+                                        type="text"
+                                        value={nom}
+                                        onChange={e => setNom(e.target.value)}
+                                        style={{ ...inputStyle, border: getFieldError('nom') ? '1px solid #ef4444' : inputStyle.border }}
+                                    />
+                                    {getFieldError('nom') && <p style={{ color: '#ef4444', fontSize: 11, fontWeight: 700, marginTop: 4 }}>{getFieldError('nom')}</p>}
+                                </div>
+                                <div>
+                                    <label style={labelStyle} htmlFor="prenom">Prénom</label>
+                                    <input
+                                        id="prenom"
+                                        type="text"
+                                        value={prenom}
+                                        onChange={e => setPrenom(e.target.value)}
+                                        style={{ ...inputStyle, border: getFieldError('prenom') ? '1px solid #ef4444' : inputStyle.border }}
+                                    />
+                                    {getFieldError('prenom') && <p style={{ color: '#ef4444', fontSize: 11, fontWeight: 700, marginTop: 4 }}>{getFieldError('prenom')}</p>}
                                 </div>
                             </div>
                         </section>
 
-                        {/* ── Banner ── */}
+                        {/* ── Change Password ── */}
+                        <section style={sectionStyle}>
+                            <div style={{ marginBottom: 24 }}>
+                                <h3 style={sectionTitle}>Sécurité</h3>
+                                <p style={sectionSub}>Changer votre mot de passe.</p>
+                            </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+                                <div style={{ gridColumn: "1 / -1" }}>
+                                    <label style={labelStyle} htmlFor="old-pass">Ancien mot de passe</label>
+                                    <input
+                                        id="old-pass"
+                                        type="password"
+                                        value={oldPassword}
+                                        onChange={e => setOldPassword(e.target.value)}
+                                        style={{ ...inputStyle, border: getPassError('old_password') ? '1px solid #ef4444' : inputStyle.border }}
+                                    />
+                                    {getPassError('old_password') && <p style={{ color: '#ef4444', fontSize: 11, fontWeight: 700, marginTop: 4 }}>{getPassError('old_password')}</p>}
+                                </div>
+                                <div>
+                                    <label style={labelStyle} htmlFor="new-pass">Nouveau mot de passe</label>
+                                    <input
+                                        id="new-pass"
+                                        type="password"
+                                        value={newPassword}
+                                        onChange={e => setNewPassword(e.target.value)}
+                                        style={{ ...inputStyle, border: getPassError('new_password') ? '1px solid #ef4444' : inputStyle.border }}
+                                    />
+                                    {getPassError('new_password') && <p style={{ color: '#ef4444', fontSize: 11, fontWeight: 700, marginTop: 4 }}>{getPassError('new_password')}</p>}
+                                </div>
+                                <div>
+                                    <label style={labelStyle} htmlFor="confirm-pass">Confirmer le nouveau mot de passe</label>
+                                    <input
+                                        id="confirm-pass"
+                                        type="password"
+                                        value={confirmPassword}
+                                        onChange={e => setConfirmPassword(e.target.value)}
+                                        style={{ ...inputStyle, border: getPassError('confirm_password') ? '1px solid #ef4444' : inputStyle.border }}
+                                    />
+                                    {getPassError('confirm_password') && <p style={{ color: '#ef4444', fontSize: 11, fontWeight: 700, marginTop: 4 }}>{getPassError('confirm_password')}</p>}
+                                </div>
+                            </div>
+                            {passSuccess && (
+                                <div style={{ marginTop: 16, padding: "12px 16px", borderRadius: 8, backgroundColor: "rgba(129,226,64,0.1)", border: "1px solid rgba(129,226,64,0.3)", color: "#4a7c20", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+                                    <span className="mat-icon" style={{ fontSize: 16 }}>check_circle</span>
+                                    Mot de passe modifié avec succès.
+                                </div>
+                            )}
+                            {getPassError('global') && (
+                                <div style={{ marginTop: 16, padding: "12px 16px", borderRadius: 8, backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+                                    <span className="mat-icon" style={{ fontSize: 16 }}>error</span>
+                                    {getPassError('global')}
+                                </div>
+                            )}
+                            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
+                                <button
+                                    onClick={handlePasswordChange}
+                                    disabled={passLoading}
+                                    style={{
+                                        padding: "8px 24px", borderRadius: 8, border: "none",
+                                        backgroundColor: passLoading ? "rgba(129,226,64,0.5)" : "#81e240",
+                                        color: "#182111", fontSize: 13, fontWeight: 700, cursor: passLoading ? "not-allowed" : "pointer",
+                                    }}
+                                >
+                                    {passLoading ? "Chargement..." : "Changer le mot de passe"}
+                                </button>
+                            </div>
+                        </section>
 
 
-                        {/* ── Feedback ── */}
-                        {success && (
-                            <div style={{ padding: "12px 16px", borderRadius: 8, backgroundColor: "rgba(129,226,64,0.1)", border: "1px solid rgba(129,226,64,0.3)", color: "#4a7c20", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-                                <span className="mat-icon" style={{ fontSize: 18 }}>check_circle</span>
-                                Profil boutique mis à jour avec succès.
-                            </div>
-                        )}
-                        {error && (
-                            <div style={{ padding: "12px 16px", borderRadius: 8, backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
-                                <span className="mat-icon" style={{ fontSize: 18 }}>error</span>
-                                {error}
-                            </div>
-                        )}
+                        {/* ── Feedback & Actions ── */}
+                        <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 16 }}>
+                            {success && (
+                                <div style={{ padding: "12px 16px", borderRadius: 8, backgroundColor: "rgba(129,226,64,0.1)", border: "1px solid rgba(129,226,64,0.3)", color: "#4a7c20", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+                                    <span className="mat-icon" style={{ fontSize: 18 }}>check_circle</span>
+                                    Profil boutique mis à jour avec succès.
+                                </div>
+                            )}
+                            {errors.global && (
+                                <div style={{ padding: "12px 16px", borderRadius: 8, backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#ef4444", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+                                    <span className="mat-icon" style={{ fontSize: 18 }}>error</span>
+                                    {errors.global}
+                                </div>
+                            )}
+                        </div>
 
                         {/* ── Actions ── */}
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 16, paddingTop: 16 }}>
