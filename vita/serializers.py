@@ -84,9 +84,18 @@ class CategorySerializer(serializers.ModelSerializer):
 class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='id_categorie.nom', read_only=True)
     seller_name = serializers.CharField(source='id_vendeur.username', read_only=True)
+    note_moyenne = serializers.SerializerMethodField()
     class Meta:
         model = Produit
         fields = ["id", "nom", "description", "prix", "quantite_stock", "note_moyenne", "url", "id_categorie", "category_name", "id_vendeur", "seller_name","tag"]
+
+    def get_note_moyenne(self, obj):
+        from django.db.models import Avg
+        from .models import Avis
+        avg_note = Avis.objects.filter(
+            id_ligne_commande__id_produit=obj
+        ).aggregate(avg=Avg('note'))['avg']
+        return round(avg_note, 2) if avg_note else 0.00
 
 class LignePanierSerializer(serializers.ModelSerializer):
     produit_nom = serializers.CharField(source="id_produit.nom", read_only=True)
@@ -258,4 +267,4 @@ class PasswordChangeSerializer(serializers.Serializer):
     def validate_new_password(self, value):
         if len(value) < 8:
             raise serializers.ValidationError("Le nouveau mot de passe doit faire au moins 8 caractères")
-        return value
+        return value

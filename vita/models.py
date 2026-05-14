@@ -121,7 +121,6 @@ class Produit(models.Model):
     prix = models.DecimalField(max_digits=10, decimal_places=2)
     url = models.URLField(max_length=500)
     quantite_stock = models.IntegerField(default=0)
-    note_moyenne = models.DecimalField(max_digits=3, decimal_places=2, default=0.00)
     class Tag(models.TextChoices):
         MEILLEURES_VENTES = 'MEILLEURES_VENTES', 'Meilleures ventes'
         NOUVEAUTES = 'NOUVEAUTES', 'Nouveautés'
@@ -200,7 +199,6 @@ class Commande(models.Model):
 
     adresse_livraison = models.TextField()
     is_deleted_by_client = models.BooleanField(default=False)
-    is_deleted_by_vendor = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -226,7 +224,6 @@ class LigneCommande(models.Model):
         choices=Statut.choices,
         default=Statut.EN_ATTENTE
     )
-    numero_suivi = models.CharField(max_length=100, blank=True, null=True)
     is_deleted_by_vendor = models.BooleanField(default=False)
     id_commande = models.ForeignKey(
         Commande,
