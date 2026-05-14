@@ -78,7 +78,7 @@ export default function Modal({ showModal, setShowModal, product, isEdit, refres
                 refreshProducts(result, false);
             }
             setShowModal(false);
-            setFormData({ name: "", description: "", price: "", stock: "", note_moyenne: "", category: "", url: "", tag: "" });
+            setFormData({ name: "", description: "", price: "", stock: "", category: "", url: "", tag: "" });
         } else {
             setErrors(typeof result === 'object' ? result : { global: "Erreur lors de l'ajout" });
             toast.error("Erreur lors de l'ajout du produit");
@@ -91,12 +91,12 @@ export default function Modal({ showModal, setShowModal, product, isEdit, refres
 
         try {
             const data = new FormData();
+
             data.append("nom", formData.name);
             data.append("description", formData.description);
             data.append("prix", formData.price);
             data.append("quantite_stock", formData.stock);
             data.append("id_categorie", formData.category);
-            data.append("note_moyenne", formData.note_moyenne);
             data.append("tag", formData.tag);
             data.append("url", formData.url);
 
@@ -113,7 +113,7 @@ export default function Modal({ showModal, setShowModal, product, isEdit, refres
                     refreshProducts(result, true);
                 }
                 setShowModal(false);
-                setFormData({ name: "", description: "", price: "", stock: "", note_moyenne: "", category: "", url: "", tag: "" });
+                setFormData({ name: "", description: "", price: "", stock: "", category: "", url: "", tag: "" });
             } else {
                 setErrors(typeof result === 'object' ? result : { global: "Erreur lors de la mise à jour" });
                 toast.error("Erreur lors de la mise à jour");
@@ -137,7 +137,7 @@ export default function Modal({ showModal, setShowModal, product, isEdit, refres
             <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
                 <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
                     <h3 className="text-xl font-black">Add New Product</h3>
-                    <button onClick={() => { setShowModal(false), setFormData({ name: "", description: "", price: "", stock: "", note_moyenne: "", category: "", url: "", tag: "" }) }} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500">
+                    <button onClick={() => { setShowModal(false); setFormData({ name: "", description: "", price: "", stock: "", category: "", url: "", tag: "" }) }} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500">
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
@@ -174,14 +174,6 @@ export default function Modal({ showModal, setShowModal, product, isEdit, refres
                                 placeholder="Quantity" type="number" min="0"
                             />
                             {getFieldError('quantite_stock') && <p className="text-[10px] text-red-500 font-bold ml-1">{getFieldError('quantite_stock')}</p>}
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Note moyenne</label>
-                            <input value={formData.note_moyenne} onChange={(e) => setFormData({ ...formData, note_moyenne: e.target.value })}
-                                className={`p-2 w-full rounded-lg border ${getFieldError('note_moyenne') ? 'border-red-500' : 'border-slate-200'} bg-white dark:bg-slate-800 focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500`}
-                                placeholder="Note moyenne" max={5} min={0} type="number"
-                            />
-                            {getFieldError('note_moyenne') && <p className="text-[10px] text-red-500 font-bold ml-1">{getFieldError('note_moyenne')}</p>}
                         </div>
                     </div>
                     <div className="space-y-1.5">
@@ -243,7 +235,7 @@ export default function Modal({ showModal, setShowModal, product, isEdit, refres
                     )}
 
                     <div className="flex gap-3 pt-4">
-                        <button onClick={() => { setShowModal(false), setFormData({ name: "", description: "", price: "", stock: "", note_moyenne: "", category: "", url: "", tag: "" }) }} className="flex-1 py-2.5 px-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" type="button">Cancel</button>
+                        <button onClick={() => { setShowModal(false); setFormData({ name: "", description: "", price: "", stock: "", category: "", url: "", tag: "" }) }} className="flex-1 py-2.5 px-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" type="button">Cancel</button>
                         <button className="flex-1 py-2.5 px-4 bg-[#81e240] text-slate-900 rounded-lg font-bold text-sm shadow-lg shadow-[#81e240]/20 hover:scale-[1.02] active:scale-[0.98] transition-all" type="submit"> {isEdit ? "Update Product" : "Create Product"}</button>
                     </div>
                 </form>
